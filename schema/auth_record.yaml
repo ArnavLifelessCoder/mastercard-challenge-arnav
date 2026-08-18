@@ -1,0 +1,293 @@
+meta:
+  name: Agentic Authorization Record
+  version: "0.1.0"
+  base: >
+    ISO 8583 authorization request and response, flattened into a JSON envelope,
+    extended with the agentic fields that Mastercard Agent Pay, Visa Trusted Agent
+    Protocol, AP2 and ACP either carry today or have declared on their roadmap.
+  units: >
+    All monetary values are integer minor units in the transaction currency
+    (cents for USD). All ratios are multipliers where 1.0 means unchanged.
+    All timestamps are RFC3339 UTC with millisecond precision. All durations are
+    named with an explicit unit suffix.
+  usage: >
+    This is the wire format every generator emits, attack and benign alike. A
+    record is emitted whole, carrying fields from every vantage point, and is then
+    projected down to an experimental view before any detector sees it. The
+    projection is the experiment. Nothing else in the pipeline is allowed to read
+    fields the chosen view does not expose.
+
+# ---------------------------------------------------------------------------
+# Vantage model
+# ---------------------------------------------------------------------------
+#
+# The central problem the taxonomy exposed: a large share of the defense_hooks
+# describe evidence that exists, but not at the point where the authorization
+# decision is made. Marking that explicitly is what turns "the detector failed"
+# into "the signal was stranded on the far side of a trust boundary", which is a
+# claim about network design rather than about model quality.
+
+vantages:
+  network:
+    desc: Present in the authorization message as it crosses the network today.
+    deployable_now: true
+  issuer:
+    desc: >
+      Held by the issuer and joinable to the auth at decision time: account
+      history, prior tokens, device reputation, servicing events.
+    deployable_now: true
+  merchant:
+    desc: >
+      Held by the merchant or its PSP. Reaches the network only in fragments,
+      and mostly after the fact.
+    deployable_now: false
+  agent_platform:
+    desc: >
+      Held by the agent operator. The user utterance, the session transcript, the
+      memory write log, the tool call trace. Never reaches the network today.
+    deployable_now: false
+  ground_truth:
+    desc: >
+      Simulator bookkeeping. Labels, sampled genome, attack success. Never
+      visible to any detector under any view. Present only for scoring.
+    deployable_now: false
+
+# `attestable: true` marks a non-network field that an attestation or mandate
+# extension could plausibly carry into the authorization message without
+# redesigning the rails. These are the fields worth arguing for. They define the
+# gap between what is deployable now and what is deployable next.
+
+views:
+  v_network:
+    include_vantages: [network]
+    desc: The frozen production view. Baseline detectors train here.
+  v_attested:
+    include_vantages: [network, issuer]
+    include_attestable: true
+    desc: >
+      Network plus issuer-joinable history plus every attestable field. This is
+      the intent-provenance view. The headline claim is that a detector on this
+      view recovers performance the v_network detector loses.
+  v_omniscient:
+    include_vantages: [network, issuer, merchant, agent_platform]
+    include_attestable: true
+    desc: Ceiling. Upper bound on achievable detection. Not a deployable target.
+
+# ---------------------------------------------------------------------------
+# Field definitions
+# ---------------------------------------------------------------------------
+
+field_groups:
+
+  # -- ISO 8583 core -------------------------------------------------------
+  message:
+    - {name: txn_id, type: string, vantage: network, required: true, desc: Unique per authorization attempt.}
+    - {name: timestamp_utc, type: datetime, vantage: network, required: true}
+    - {name: message_type, type: enum, values: [auth_request, auth_advice, reversal], vantage: network, required: true}
+    - {name: auth_type, type: enum, values: [initial, incremental, final, estimated], vantage: network, required: true,
+       desc: Incremental is the mechanism MND-03 walks upward.}
+    - {name: original_txn_id, type: string, vantage: network, required: false,
+       desc: Set on incremental, final and reversal. Links a capture chain.}
+    - {name: processing_code, type: string, vantage: network, required: true}
+
+  amount:
+    - {name: amount_minor, type: int, vantage: network, required: true}
+    - {name: currency, type: string, vantage: network, required: true, desc: ISO 4217 alpha-3.}
+    - {name: settlement_amount_minor, type: int, vantage: network, required: false}
+    - {name: settlement_currency, type: string, vantage: network, required: false}
+    - {name: cumulative_captured_minor, type: int, vantage: network, required: false,
+       desc: Running total across the capture chain. Defense hook cumulative_capture_vs_consent_ratio needs this and consent_amount_minor together.}
+
+  credential:
+    - {name: account_id, type: string, vantage: issuer, required: true, desc: Stable pseudonymous cardholder key. Not a PAN.}
+    - {name: token_id, type: string, vantage: network, required: true}
+    - {name: token_type, type: enum, values: [pan, network_token, agentic_token], vantage: network, required: true}
+    - {name: token_issued_at, type: datetime, vantage: network, required: false}
+    - {name: token_assurance_level, type: enum, values: [none, id_and_v, device_binding, agent_binding], vantage: network, required: false}
+    - {name: issuer_country, type: string, vantage: issuer, required: true}
+    - {name: bin, type: string, vantage: network, required: true}
+
+  merchant:
+    - {name: merchant_id, type: string, vantage: network, required: true}
+    - {name: merchant_descriptor, type: string, vantage: network, required: true,
+       desc: The string MND-05 aliases against a mandate allowlist entry.}
+    - {name: merchant_legal_name, type: string, vantage: merchant, required: false, attestable: true}
+    - {name: merchant_tax_id, type: string, vantage: merchant, required: false, attestable: true,
+       desc: Separates MND-05 lookalikes from the real allowlisted entity.}
+    - {name: mcc, type: string, vantage: network, required: true}
+    - {name: acquirer_bin, type: string, vantage: network, required: true}
+    - {name: merchant_country, type: string, vantage: network, required: true}
+    - {name: merchant_domain, type: string, vantage: network, required: false, attestable: true}
+    - {name: merchant_domain_first_seen, type: datetime, vantage: network, required: false,
+       desc: Network-side first observation, not registrar age. Feeds AGH-04 merchant_domain_age.}
+    - {name: merchant_tenure_days, type: int, vantage: network, required: false}
+    - {name: merchant_dispute_rate_bps, type: int, vantage: network, required: false}
+
+  channel:
+    - {name: channel, type: enum, values: [card_present, ecom_human, ecom_agentic], vantage: network, required: true}
+    - {name: pos_entry_mode, type: string, vantage: network, required: true}
+    - {name: ecom_indicator, type: string, vantage: network, required: false}
+    - {name: acquisition_channel, type: enum, values: [direct, known_catalog, organic_search, affiliate, agent_marketplace, unknown],
+       vantage: merchant, required: false, attestable: true,
+       desc: AGH-04 turns on this. Organic search arrival is the tell.}
+
+  device_and_origin:
+    - {name: device_fingerprint_id, type: string, vantage: issuer, required: false}
+    - {name: device_first_seen, type: datetime, vantage: issuer, required: false}
+    - {name: source_ip_asn, type: int, vantage: network, required: false}
+    - {name: source_geo_country, type: string, vantage: network, required: false}
+    - {name: source_geo_lat, type: float, vantage: network, required: false}
+    - {name: source_geo_lon, type: float, vantage: network, required: false}
+    - {name: rtt_ms, type: int, vantage: network, required: false,
+       desc: IDS-08 clone detection needs latency inconsistent with claimed geography.}
+
+  authentication:
+    - {name: threeds_indicator, type: enum, values: [none, attempted, authenticated, frictionless, challenged], vantage: network, required: false}
+    - {name: sca_exemption, type: enum, values: [none, trusted_beneficiary, low_value, tra, delegated_authentication, agent_delegated], vantage: network, required: false}
+    - {name: ds_transaction_id, type: string, vantage: network, required: false}
+    - {name: avs_result, type: string, vantage: network, required: false}
+    - {name: cvv_result, type: string, vantage: network, required: false}
+    - {name: stepup_performed, type: bool, vantage: issuer, required: false}
+    - {name: stepup_method, type: enum, values: [none, otp_sms, otp_app, voice_biometric, kba, passkey], vantage: issuer, required: false}
+    - {name: stepup_response_latency_ms, type: int, vantage: issuer, required: false,
+       desc: CGA-01 and CGA-09 both read as anomalies in this distribution.}
+    - {name: otp_issued_session_id, type: string, vantage: issuer, required: false}
+    - {name: otp_consumed_session_id, type: string, vantage: issuer, required: false,
+       desc: CGA-09 is exactly the case where these two differ.}
+
+  # -- Agentic extensions --------------------------------------------------
+  agent_identity:
+    - {name: agent_present, type: bool, vantage: network, required: true}
+    - {name: agent_id, type: string, vantage: network, required: false,
+       desc: Per Agent Pay style agentic token binding.}
+    - {name: agent_provider_id, type: string, vantage: network, required: false}
+    - {name: agent_provider_registered_at, type: datetime, vantage: network, required: false,
+       desc: IDS-06 provider_tenure_vs_volume needs this.}
+    - {name: declared_agent_identity, type: string, vantage: network, required: false,
+       desc: Self-asserted. IDS-01 is the case where this is a lie and attestation is absent.}
+    - {name: agent_attestation_status, type: enum, values: [verified, failed, absent, expired], vantage: network, required: true}
+    - {name: agent_attestation_method, type: enum, values: [none, http_message_signature, mtls, jwt_vc, web_bot_auth], vantage: network, required: false}
+    - {name: agent_credential_id, type: string, vantage: network, required: false}
+    - {name: agent_credential_issued_at, type: datetime, vantage: network, required: false}
+    - {name: agent_type, type: enum, values: [none, shopping, browser, assistant, procurement, crawler], vantage: network, required: false}
+
+  delegation:
+    - {name: delegation_depth, type: int, vantage: agent_platform, required: false, attestable: true,
+       desc: MND-08. Depth 1 is the enrolled agent acting directly.}
+    - {name: terminal_agent_id, type: string, vantage: agent_platform, required: false, attestable: true,
+       desc: The identity that actually executed. May differ from agent_id.}
+    - {name: terminal_agent_attested, type: bool, vantage: agent_platform, required: false, attestable: true}
+    - {name: granted_scope_amount_minor, type: int, vantage: network, required: false}
+    - {name: effective_scope_amount_minor, type: int, vantage: agent_platform, required: false, attestable: true}
+
+  mandate:
+    - {name: mandate_id, type: string, vantage: network, required: false}
+    - {name: mandate_type, type: enum, values: [none, intent, cart, recurring], vantage: network, required: false,
+       desc: AP2 splits intent from cart. MND-02 attacks the gap between them.}
+    - {name: mandate_hash, type: string, vantage: network, required: false,
+       desc: Hash of the consented basket as submitted.}
+    - {name: consent_recorded_hash, type: string, vantage: agent_platform, required: false, attestable: true,
+       desc: Hash of the basket the user actually approved. MND-02 is the case where these two differ while the signature still validates.}
+    - {name: consent_timestamp, type: datetime, vantage: network, required: false}
+    - {name: consent_expiry, type: datetime, vantage: network, required: false,
+       desc: MND-06 replays outside this window.}
+    - {name: consent_amount_minor, type: int, vantage: network, required: false}
+    - {name: mandate_per_txn_cap_minor, type: int, vantage: network, required: false,
+       desc: MND-04 clusters amounts just under this.}
+    - {name: mandate_window_cap_minor, type: int, vantage: network, required: false}
+    - {name: mandate_window_hours, type: float, vantage: network, required: false}
+    - {name: mandate_allowlist_descriptors, type: "list[string]", vantage: network, required: false}
+    - {name: mandate_allowed_mccs, type: "list[string]", vantage: network, required: false}
+    - {name: mandate_use_count, type: int, vantage: network, required: false,
+       desc: Replay counter for MND-06.}
+
+  intent_provenance:
+    - {name: intent_id, type: string, vantage: agent_platform, required: false, attestable: true}
+    - {name: intent_timestamp, type: datetime, vantage: agent_platform, required: false, attestable: true}
+    - {name: intent_text_embedding, type: "list[float]", vantage: agent_platform, required: false, attestable: true,
+       desc: "Embedding of the user's stated need, not the raw utterance. Carrying an embedding rather than text is what makes this plausibly attestable without shipping the transcript to the network."}
+    - {name: cart_text_embedding, type: "list[float]", vantage: agent_platform, required: false, attestable: true,
+       desc: AGH-01 intent_cart_semantic_distance is the distance between these two.}
+    - {name: intent_category, type: string, vantage: agent_platform, required: false, attestable: true}
+    - {name: session_id, type: string, vantage: agent_platform, required: false, attestable: true}
+    - {name: session_turn_index, type: int, vantage: agent_platform, required: false, attestable: true}
+    - {name: session_objective_drift, type: float, vantage: agent_platform, required: false, attestable: true,
+       desc: AGH-09. Cumulative distance from the first stated objective, multiplier semantics not applicable, 0 is no drift.}
+    - {name: user_confirmation_events, type: int, vantage: agent_platform, required: false, attestable: true,
+       desc: AGH-01 confirmation_suppressed shows up here as zero.}
+    - {name: user_interaction_events, type: int, vantage: agent_platform, required: false, attestable: true,
+       desc: IDS-05 user_interaction_density. Machine-speed fan-out has none.}
+    - {name: time_since_last_user_event_ms, type: int, vantage: agent_platform, required: false, attestable: true}
+    - {name: cart_build_to_submit_ms, type: int, vantage: agent_platform, required: false, attestable: true}
+
+  memory_and_payee:
+    - {name: payee_id, type: string, vantage: issuer, required: false}
+    - {name: payee_first_seen, type: datetime, vantage: issuer, required: false}
+    - {name: payee_mutated_at, type: datetime, vantage: agent_platform, required: false, attestable: true}
+    - {name: payee_mutation_source, type: enum,
+       values: [none, user_utterance, email, document, web_page, support_ticket, tool_output],
+       vantage: agent_platform, required: false, attestable: true,
+       desc: MND-01 and XRL-04 both hinge on this being anything other than user_utterance.}
+    - {name: memory_write_to_use_latency_hours, type: float, vantage: agent_platform, required: false, attestable: true,
+       desc: MND-01 dormancy. Long latency is the whole trick.}
+    - {name: user_event_within_mutation_window, type: bool, vantage: agent_platform, required: false, attestable: true}
+
+  content_provenance:
+    - {name: page_visible_text_hash, type: string, vantage: merchant, required: false}
+    - {name: page_extracted_text_hash, type: string, vantage: agent_platform, required: false, attestable: true,
+       desc: AGH-03 visible_vs_extracted_text_delta needs both halves. Only one is attestable, which is itself a finding.}
+    - {name: injection_classifier_score, type: float, vantage: agent_platform, required: false, attestable: true}
+    - {name: tool_server_id, type: string, vantage: agent_platform, required: false, attestable: true}
+    - {name: tool_server_trust, type: enum, values: [allowlisted, unknown, typosquatted, compromised], vantage: agent_platform, required: false, attestable: true}
+    - {name: declared_vs_executed_param_diff, type: float, vantage: agent_platform, required: false, attestable: true,
+       desc: AGH-08. 0.0 is no drift.}
+    - {name: advertised_amount_minor, type: int, vantage: merchant, required: false, attestable: true,
+       desc: IDS-04 and AGH-06. Compare against amount_minor.}
+
+  series:
+    - {name: series_id, type: string, vantage: network, required: false}
+    - {name: series_sequence, type: int, vantage: network, required: false}
+    - {name: series_baseline_amount_minor, type: int, vantage: network, required: false,
+       desc: MND-07 amount_step_ratio is amount_minor over this.}
+    - {name: series_interval_days, type: float, vantage: network, required: false}
+    - {name: series_beneficiary_id, type: string, vantage: network, required: false}
+
+  response:
+    - {name: response_code, type: string, vantage: network, required: true}
+    - {name: approved, type: bool, vantage: network, required: true}
+    - {name: decline_reason, type: string, vantage: network, required: false}
+    - {name: risk_score_issuer, type: float, vantage: issuer, required: false,
+       desc: Incumbent model score if one is being simulated as an upstream input.}
+
+  # -- Simulator bookkeeping ----------------------------------------------
+  ground_truth:
+    - {name: label, type: enum, values: [benign, fraud], vantage: ground_truth, required: true}
+    - {name: vector_id, type: string, vantage: ground_truth, required: false,
+       desc: Null for benign. Otherwise a taxonomy id such as MND-01.}
+    - {name: family, type: string, vantage: ground_truth, required: false}
+    - {name: genome, type: object, vantage: ground_truth, required: false,
+       desc: The exact sampled parameter dict. Required for the coevolution loop to attribute evasion.}
+    - {name: attack_succeeded, type: bool, vantage: ground_truth, required: false,
+       desc: "Distinct from label. An attempted attack that the simulated control environment blocked is still labelled fraud but did not succeed. Keeping these apart stops the detector being scored on attacks that never had to be caught."}
+    - {name: loss_minor, type: int, vantage: ground_truth, required: false}
+    - {name: campaign_id, type: string, vantage: ground_truth, required: false,
+       desc: Groups records from one attack episode. Splits must be grouped on this or the evaluation leaks.}
+    - {name: generator_version, type: string, vantage: ground_truth, required: true}
+    - {name: taxonomy_version, type: string, vantage: ground_truth, required: true}
+
+# ---------------------------------------------------------------------------
+# Known open items, recorded rather than silently assumed
+# ---------------------------------------------------------------------------
+open_items:
+  - >
+    Embedding dimensionality for intent_text_embedding and cart_text_embedding is
+    unset. Pick one and freeze it before any generator writes vectors, because
+    changing it later invalidates every stored dataset.
+  - >
+    Nothing here models fulfilment or settlement. XRL-05 bust-out and XRL-01
+    refund abuse need a second record type on a slower clock. Deferred, not
+    forgotten.
+  - >
+    merchant vantage fields are currently populated by the simulator for
+    completeness but no view except v_omniscient exposes the non-attestable ones.
+    If that stays true, consider dropping them to keep record size down.

@@ -1,0 +1,1161 @@
+meta:
+  name: Agentic Payments Red Team Taxonomy
+  version: "0.3.0"
+  scope: >
+    Attack vectors targeting payment rails where a GenAI system is either the
+    attacker, the victim, or the transacting party. Weighted deliberately toward
+    agentic commerce rails (Mastercard Agent Pay / Agentic Tokens, Visa Trusted
+    Agent, AP2, ACP, UCP) because that surface is live in production and has the
+    thinnest fraud tooling today.
+  difficulty_provenance: >
+    v0.3.0. Every implemented vector now carries a measured `difficulty` taken
+    from its round-7 evasion rate against the arm G detector in
+    experiments/coevolution.py. The original hand-set prior is preserved as
+    `difficulty_prior` so the two can be compared. Where they disagree sharply
+    the prior was wrong, not the measurement: AGH-07 was guessed at 0.70 and
+    measures 0.00, MND-04 was guessed at 0.55 and measures 0.00, while AGH-02
+    was guessed at 0.70 and measures 1.00.
+  ratio_convention: >
+    v0.2.0 normalisation. Every parameter whose name ends in _ratio, _multiple or
+    _multiplier is a multiplier where 1.0 means unchanged. v0.1.0 mixed additive
+    fractions and multipliers in the same file, which would have silently halved
+    or doubled generated amounts depending on which vector emitted them. Renamed:
+    cart_delta_ratio -> cart_value_ratio, price_discount_vs_median ->
+    price_ratio_to_median, price_divergence -> checkout_to_retrieved_price_ratio,
+    price_below_market -> price_ratio_to_market, feed_vs_auth_delta ->
+    auth_to_feed_price_ratio. Fractions of a stated bound (cap_proximity,
+    amount_vs_balance_ratio, conversion_rate) keep fraction semantics.
+  usage: >
+    This file is the single source of truth for all three pillars. The Identify
+    pillar is this document. The Generate pillar reads `parameters` as the attack
+    genome and samples from the declared ranges. The Defend pillar reads
+    `defense_hooks` as the feature engineering backlog and `signals` as the
+    observability requirement. The coevolution loop mutates `parameters` within
+    range and uses `difficulty` as its prior.
+
+schema:
+  id: Stable identifier. Never reuse or renumber.
+  family: One of the families declared below.
+  rails: Payment rails the vector touches.
+  genai_leverage: What generative AI specifically buys the attacker here.
+  mechanism: How the attack actually executes, grounded in real system behaviour.
+  signals: Observable evidence available to a defender at or before authorization.
+  parameters: Simulatable knobs. Each has a type and a sampling range. This is the genome.
+  defense_hooks: Candidate detection features. Seeds the Defend pillar.
+  difficulty: Prior on detection hardness, 0 (trivial) to 1 (near invisible).
+  status: implemented | stub. Only `implemented` vectors have working generators.
+
+families:
+  agent_hijack: >
+    The user's own agent is turned against them by content it ingests. The
+    resulting authorization is cryptographically valid and mandate-compliant.
+  mandate_abuse: >
+    The agentic token's scope, consent policy, or memory is manipulated so that
+    fraudulent spend stays technically inside the granted envelope.
+  identity_spoofing: >
+    Either the agent or the merchant is not who the other party believes it is.
+    Attacks the Know Your Agent trust anchor.
+  classical_genai: >
+    Pre-agentic fraud typologies where GenAI collapses cost, scale, or fidelity.
+    Included for taxonomy breadth and as the control group for the headline
+    experiment.
+  cross_rail: >
+    Post-authorization and multi-party abuse: refunds, chargebacks, stored value,
+    B2B, mule networks.
+
+rails_enum:
+  - card_not_present
+  - agentic_token
+  - card_present
+  - account_to_account
+  - instant_payment
+  - stored_value
+  - b2b_invoice
+
+# ---------------------------------------------------------------------------
+# FAMILY: agent_hijack
+# ---------------------------------------------------------------------------
+
+vectors:
+
+  - id: AGH-01
+    name: Checkout-page indirect prompt injection
+    family: agent_hijack
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Agent reads page content as instruction, not data.
+    mechanism: >
+      Attacker controls or compromises content on a merchant page the agent
+      parses during checkout. Hidden text instructs the agent to alter the
+      shipping address, add a line item, or complete purchase without the
+      confirmation step. The agent submits a valid authorization.
+    signals:
+      - divergence between user utterance intent and final cart contents
+      - shipping address never previously seen on the account
+      - checkout completed with zero user confirmation events
+      - unusually short dwell time between cart build and submit
+    parameters:
+      injection_placement: {type: categorical, values: [visible_text, aria_label, alt_text, css_hidden, comment_node]}
+      payload_specificity: {type: float, range: [0.0, 1.0], desc: 0 is vague nudge, 1 is fully specified txn}
+      cart_value_ratio: {type: float, range: [1.0, 4.0], desc: final cart value over user-intended value, 1.0 is unchanged}
+      confirmation_suppressed: {type: bool}
+      agent_model_susceptibility: {type: float, range: [0.0, 0.5], desc: empirical rate, ~4/26 models compromised in Zscaler tests}
+    defense_hooks:
+      - intent_cart_semantic_distance
+      - confirmation_event_present
+      - shipping_address_novelty_score
+      - page_content_injection_classifier_score
+    difficulty: 0.94
+    difficulty_prior: 0.85
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: AGH-02
+    name: Product review corpus injection
+    family: agent_hijack
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Reviews are user-generated, unmoderated for agent-directed text.
+    mechanism: >
+      Attacker seeds review text on a legitimate marketplace with instructions
+      addressed to shopping agents. Agent summarizing reviews ingests the payload
+      and redirects purchase toward the attacker's listing or applies an
+      attacker-supplied discount code that maps to a stored value drain.
+    signals:
+      - agent selected a listing with anomalous review recency clustering
+      - listing seller age below threshold
+      - price materially below category median
+    parameters:
+      review_count_seeded: {type: int, range: [1, 50]}
+      review_recency_days: {type: int, range: [0, 30]}
+      price_ratio_to_median: {type: float, range: [0.3, 0.9], desc: listing price over category median}
+      seller_account_age_days: {type: int, range: [0, 180]}
+    defense_hooks:
+      - seller_tenure
+      - price_deviation_from_category_median
+      - review_burst_score
+    difficulty: 1.0
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: AGH-03
+    name: Hidden DOM and meta-tag injection
+    family: agent_hijack
+    rails: [agentic_token]
+    genai_leverage: Agents parse structured markup humans never see.
+    mechanism: >
+      Instructions embedded in meta tags, JSON-LD blocks, or zero-opacity nodes
+      route financial actions toward attacker endpoints. Invisible to human
+      review, fully legible to the agent's DOM extraction.
+    signals:
+      - mismatch between rendered visible text and extracted agent context
+      - payee endpoint not matching merchant of record
+    parameters:
+      tag_type: {type: categorical, values: [meta, json_ld, script_comment, zero_opacity_div, off_canvas]}
+      endpoint_mismatch: {type: bool}
+      obfuscation_level: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - visible_vs_extracted_text_delta
+      - payee_merchant_of_record_match
+    difficulty: 0.88
+    difficulty_prior: 0.8
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: AGH-04
+    name: SEO poisoning to injected landing page
+    family: agent_hijack
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Keyword-dense pages generated at scale to capture agent search.
+    mechanism: >
+      Attacker builds keyword-heavy pages targeting queries agents make during
+      task execution, then hides payment instructions in them. Documented in the
+      wild against package-installation and API-key acquisition queries.
+    signals:
+      - merchant domain first seen within trailing 90 days
+      - agent arrived at merchant via organic search rather than known catalog
+      - transaction framed as fee or API access rather than goods
+    parameters:
+      domain_age_days: {type: int, range: [1, 365]}
+      query_intent: {type: categorical, values: [software_dependency, api_key, subscription, service_fee, physical_goods]}
+      serp_rank: {type: int, range: [1, 10]}
+      requested_amount_usd: {type: float, range: [5, 500]}
+    defense_hooks:
+      - merchant_domain_age
+      - acquisition_channel
+      - mcc_vs_stated_intent_consistency
+    difficulty: 0.9
+    difficulty_prior: 0.65
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: AGH-05
+    name: Adversarial interstitial (fake CAPTCHA / PromptFix pattern)
+    family: agent_hijack
+    rails: [agentic_token]
+    genai_leverage: Agent trained to resolve blockers autonomously will act on them.
+    mechanism: >
+      A fake verification widget carries instructions the agent executes in order
+      to "pass" the check, triggering a download, credential disclosure, or
+      out-of-scope payment.
+    signals:
+      - interaction with a non-standard verification widget
+      - action taken immediately after blocker resolution
+    parameters:
+      widget_type: {type: categorical, values: [captcha, age_gate, cookie_wall, verification_email, human_check]}
+      payload_action: {type: categorical, values: [download, payment, credential_disclosure, scope_expansion]}
+      urgency_framing: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - blocker_resolution_to_action_latency
+      - non_standard_widget_flag
+    difficulty: 0.75
+    status: stub
+
+  - id: AGH-06
+    name: Merchant catalog RAG poisoning
+    family: agent_hijack
+    rails: [agentic_token]
+    genai_leverage: Retrieval layers ingest supplier feeds with no adversarial filter.
+    mechanism: >
+      Attacker poisons a product feed or catalog index the agent retrieves from,
+      so that the retrieved context itself carries the malicious directive or a
+      falsified price and fulfilment promise.
+    signals:
+      - catalog entry hash changed since last crawl
+      - retrieved price diverges from checkout price
+    parameters:
+      poisoned_entry_fraction: {type: float, range: [0.001, 0.05]}
+      checkout_to_retrieved_price_ratio: {type: float, range: [1.0, 10.0], desc: price charged over price retrieved}
+      feed_source: {type: categorical, values: [supplier_feed, marketplace_index, affiliate_network, cached_crawl]}
+    defense_hooks:
+      - retrieved_vs_authorized_price_delta
+      - catalog_entry_mutation_rate
+    difficulty: 0.8
+    status: stub
+
+  - id: AGH-07
+    name: Transactional email injection
+    family: agent_hijack
+    rails: [agentic_token, account_to_account]
+    genai_leverage: Agents with inbox access treat mail bodies as trusted context.
+    mechanism: >
+      Attacker sends an order confirmation or invoice lookalike containing
+      instructions the agent processes when triaging or reconciling. Frequently
+      chains into payee redirection.
+    signals:
+      - sender domain unverified by DMARC
+      - payee change instruction originating from inbound message
+      - no corresponding user-initiated request
+    parameters:
+      spoof_quality: {type: float, range: [0.0, 1.0]}
+      dmarc_pass: {type: bool}
+      instruction_type: {type: categorical, values: [payee_change, amount_change, urgency_payment, refund_redirect]}
+      thread_hijack: {type: bool}
+    defense_hooks:
+      - payee_change_provenance
+      - inbound_message_authentication_status
+      - user_initiation_trace_present
+    difficulty: 0.0
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: AGH-08
+    name: Tool and MCP server poisoning
+    family: agent_hijack
+    rails: [agentic_token, account_to_account]
+    genai_leverage: Tool descriptions are prompt surface the agent trusts implicitly.
+    mechanism: >
+      A malicious or compromised tool server advertises a payment-capable tool
+      whose description contains directives, or silently rewrites parameters
+      between agent intent and execution.
+    signals:
+      - tool server not on registry allowlist
+      - parameter drift between agent-declared and executed call
+    parameters:
+      server_trust_level: {type: categorical, values: [allowlisted, unknown, typosquatted, compromised_known]}
+      parameter_drift_magnitude: {type: float, range: [0.0, 1.0]}
+      tool_category: {type: categorical, values: [payment, wallet, ledger, checkout, refund]}
+    defense_hooks:
+      - tool_registry_attestation
+      - declared_vs_executed_param_diff
+    difficulty: 0.85
+    status: stub
+
+  - id: AGH-09
+    name: Multi-turn conversational goal drift
+    family: agent_hijack
+    rails: [agentic_token]
+    genai_leverage: Long-horizon agents accumulate context that shifts the objective.
+    mechanism: >
+      Rather than a single injection, the attacker distributes small nudges
+      across many turns or many pages so no individual input trips a filter, but
+      the cumulative objective is displaced toward attacker-favourable spend.
+    signals:
+      - objective drift measured across session turns
+      - final purchase category diverges from initial stated need
+    parameters:
+      turns_to_drift: {type: int, range: [3, 40]}
+      per_turn_nudge_magnitude: {type: float, range: [0.01, 0.3]}
+      category_drift: {type: bool}
+    defense_hooks:
+      - session_objective_drift_score
+      - initial_vs_final_intent_distance
+    difficulty: 0.94
+    difficulty_prior: 0.9
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+# ---------------------------------------------------------------------------
+# FAMILY: mandate_abuse
+# ---------------------------------------------------------------------------
+
+  - id: MND-01
+    name: Persistent memory poisoning of payee routing
+    family: mandate_abuse
+    rails: [account_to_account, b2b_invoice, agentic_token]
+    genai_leverage: Agent long-term memory persists an instruction far past the session.
+    mechanism: >
+      Attacker plants a durable fact in agent memory, for example that invoices
+      from a given vendor route to a new account. The instruction fires days or
+      weeks later on a legitimate-looking trigger, decoupling the compromise from
+      the fraudulent payment in time.
+    signals:
+      - payee record mutated with no contemporaneous user event
+      - long latency between memory write and first use
+      - memory write originated from ingested content, not user input
+    parameters:
+      dormancy_days: {type: int, range: [1, 90]}
+      write_channel: {type: categorical, values: [support_ticket, email, document, web_page, user_utterance]}
+      payee_delta: {type: categorical, values: [account_number, bank, name_only, full_replace]}
+      value_at_risk_usd: {type: float, range: [500, 250000]}
+    defense_hooks:
+      - payee_mutation_provenance_chain
+      - memory_write_to_execution_latency
+      - user_event_correlation_window
+    difficulty: 0.0
+    difficulty_prior: 0.95
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-02
+    name: Cart mandate substitution
+    family: mandate_abuse
+    rails: [agentic_token]
+    genai_leverage: Mandate is machine-generated and machine-verified only.
+    mechanism: >
+      The cart mandate, the digital contract binding user consent to a specific
+      basket, is altered between user approval and authorization submission.
+      Contents, price, or merchant differ from what was consented to while the
+      cryptographic wrapper still validates.
+    signals:
+      - cart mandate hash mismatch against consent record
+      - line items added post-consent
+    parameters:
+      substitution_type: {type: categorical, values: [line_item_add, price_uplift, merchant_swap, quantity_inflate]}
+      value_uplift_ratio: {type: float, range: [1.05, 6.0], desc: submitted value over consented value}
+      hash_validation_bypassed: {type: bool}
+      time_to_substitution_ms: {type: int, range: [10, 60000]}
+    defense_hooks:
+      - mandate_hash_consistency
+      - consent_to_auth_delta
+    difficulty: 0.0
+    difficulty_prior: 0.75
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-03
+    name: Incremental authorization scope creep
+    family: mandate_abuse
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Agent-native flows normalise incremental and partial auths.
+    mechanism: >
+      Attacker exploits incremental authorization to walk the captured amount
+      upward in steps each of which sits inside the mandate's per-transaction
+      tolerance, ending far above the consented total.
+    signals:
+      - incremental auth count above baseline for merchant category
+      - cumulative capture exceeds original consent by material margin
+    parameters:
+      increment_count: {type: int, range: [2, 20]}
+      per_increment_ratio: {type: float, range: [1.02, 1.25], desc: each step as a multiple of the running total}
+      total_overage_ratio: {type: float, range: [1.1, 5.0], desc: final capture over original consent}
+      merchant_category: {type: categorical, values: [travel, hospitality, fuel, marketplace, services]}
+    defense_hooks:
+      - cumulative_capture_vs_consent_ratio
+      - incremental_auth_velocity
+    difficulty: 0.74
+    difficulty_prior: 0.6
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-04
+    name: Sub-cap structuring
+    family: mandate_abuse
+    rails: [agentic_token]
+    genai_leverage: Agent can probe and enumerate policy limits cheaply.
+    mechanism: >
+      Attacker discovers the per-session or per-merchant cap and splits spend
+      into many transactions each just under it, across sessions or merchants,
+      to drain the credential without tripping a single limit.
+    signals:
+      - transaction amounts clustered immediately below a policy threshold
+      - session count elevated with near-identical spend profile
+    parameters:
+      cap_proximity: {type: float, range: [0.85, 0.999], desc: amount as fraction of known cap}
+      split_count: {type: int, range: [3, 60]}
+      merchant_spread: {type: int, range: [1, 15]}
+      window_hours: {type: float, range: [0.5, 168]}
+    defense_hooks:
+      - amount_to_cap_proximity_distribution
+      - cross_session_aggregate_velocity
+      - benford_deviation_on_amounts
+    difficulty: 0.0
+    difficulty_prior: 0.55
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-05
+    name: Allowlist aliasing via lookalike merchant
+    family: mandate_abuse
+    rails: [agentic_token]
+    genai_leverage: Merchant descriptors and MCCs generated to match allowlist entries.
+    mechanism: >
+      Attacker registers a merchant whose descriptor, MCC, and name closely match
+      an entry on the user's mandate allowlist, so scope enforcement at the
+      network layer passes while the funds go elsewhere.
+    signals:
+      - merchant descriptor edit distance to allowlist entry below threshold
+      - merchant acquirer and tax ID differ from allowlisted entity
+    parameters:
+      descriptor_edit_distance: {type: int, range: [0, 6]}
+      mcc_match: {type: bool}
+      acquirer_mismatch: {type: bool}
+      merchant_tenure_days: {type: int, range: [1, 720]}
+    defense_hooks:
+      - descriptor_similarity_to_allowlist
+      - entity_identity_vs_descriptor_consistency
+    difficulty: 0.9
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-06
+    name: Stale mandate replay
+    family: mandate_abuse
+    rails: [agentic_token]
+    genai_leverage: Automated capture and replay of intent payloads at scale.
+    mechanism: >
+      An intent payload or agentic token whose consent window has expired, or
+      which was already consumed, is replayed against a merchant whose validation
+      of freshness is weak.
+    signals:
+      - intent timestamp outside validity window
+      - duplicate mandate identifier
+    parameters:
+      staleness_hours: {type: float, range: [0.1, 720]}
+      replay_count: {type: int, range: [1, 25]}
+      merchant_validation_strictness: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - mandate_freshness_check
+      - mandate_id_replay_counter
+    difficulty: 0.4
+    status: stub
+
+  - id: MND-07
+    name: Recurring mandate hijack
+    family: mandate_abuse
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Subscription negotiation delegated to agents at scale.
+    mechanism: >
+      A legitimate recurring mandate is modified in amount, frequency, or
+      beneficiary. Because the credential and the relationship are established,
+      the modified stream inherits the trust of the original.
+    signals:
+      - amount or frequency step change on an established recurring series
+      - beneficiary change on an existing series
+    parameters:
+      amount_step_ratio: {type: float, range: [1.1, 10.0]}
+      frequency_multiplier: {type: float, range: [1.0, 12.0]}
+      beneficiary_changed: {type: bool}
+      series_age_months: {type: int, range: [1, 60]}
+    defense_hooks:
+      - recurring_series_change_point_score
+      - beneficiary_stability
+    difficulty: 0.86
+    difficulty_prior: 0.65
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: MND-08
+    name: Sub-agent scope inheritance abuse
+    family: mandate_abuse
+    rails: [agentic_token, b2b_invoice]
+    genai_leverage: Multi-agent orchestration delegates credentials downward.
+    mechanism: >
+      A primary agent spawns or delegates to a sub-agent, which inherits or is
+      granted a superset of the intended scope. Attacker compromises the weaker
+      sub-agent and transacts under the primary's trust.
+    signals:
+      - authorization originating from an agent identity distinct from the enrolled one
+      - delegation chain depth above baseline
+    parameters:
+      delegation_depth: {type: int, range: [1, 5]}
+      scope_expansion_ratio: {type: float, range: [1.0, 8.0]}
+      sub_agent_attested: {type: bool}
+    defense_hooks:
+      - delegation_chain_depth
+      - effective_vs_granted_scope_ratio
+      - terminal_agent_attestation_status
+    difficulty: 0.85
+    status: stub
+
+# ---------------------------------------------------------------------------
+# FAMILY: identity_spoofing
+# ---------------------------------------------------------------------------
+
+  - id: IDS-01
+    name: Agent header and user-agent impersonation
+    family: identity_spoofing
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Trivially automated at very high volume.
+    mechanism: >
+      Attacker traffic declares itself as a well-known commercial agent so that
+      merchants applying agent-friendly trust rules relax their controls.
+      Impersonation of major agent identities is already observed at meaningful
+      rates across large networks.
+    signals:
+      - declared agent identity fails cryptographic attestation
+      - request origin ASN inconsistent with declared agent operator
+    parameters:
+      impersonated_agent: {type: categorical, values: [major_assistant, browser_agent, shopping_agent, crawler]}
+      attestation_present: {type: bool}
+      asn_consistency: {type: bool}
+      request_volume_per_hour: {type: int, range: [10, 100000]}
+    defense_hooks:
+      - agent_attestation_verification
+      - declared_identity_vs_network_origin
+    difficulty: 0.78
+    difficulty_prior: 0.35
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-02
+    name: Agent attestation credential theft and replay
+    family: identity_spoofing
+    rails: [agentic_token]
+    genai_leverage: Credential harvesting pipelines automated end to end.
+    mechanism: >
+      A genuine agent's attestation credential or signing key is stolen and
+      replayed, so the attacker passes Know Your Agent checks cleanly while
+      operating from foreign infrastructure.
+    signals:
+      - same agent credential asserted from disjoint infrastructure simultaneously
+      - behavioural fingerprint divergence from the credential's history
+    parameters:
+      concurrent_origins: {type: int, range: [1, 20]}
+      behavioural_divergence: {type: float, range: [0.0, 1.0]}
+      credential_age_days: {type: int, range: [0, 400]}
+    defense_hooks:
+      - impossible_concurrency_check
+      - agent_behavioural_fingerprint_distance
+    difficulty: 1.0
+    difficulty_prior: 0.8
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-03
+    name: Counterfeit storefront tuned for agent heuristics
+    family: identity_spoofing
+    rails: [card_not_present, agentic_token]
+    genai_leverage: Entire storefronts, catalogs, and review histories generated cheaply.
+    mechanism: >
+      A fraudulent storefront is engineered to satisfy exactly the structured
+      signals an agent evaluates, valid SSL, complete schema markup, plausible
+      reviews, below-market pricing, while lacking the visual and intuitive cues
+      a human shopper would find suspicious. The agent optimising for best price
+      completes the purchase and the operator harvests the payment data.
+    signals:
+      - structured signal completeness far exceeds site operational history
+      - price below market with no supply explanation
+      - no chargeback or dispute history
+    parameters:
+      schema_completeness: {type: float, range: [0.7, 1.0]}
+      price_ratio_to_market: {type: float, range: [0.4, 0.9], desc: offer price over market price}
+      site_age_days: {type: int, range: [1, 200]}
+      review_authenticity: {type: float, range: [0.0, 0.5]}
+      ssl_valid: {type: bool}
+    defense_hooks:
+      - structured_signal_vs_tenure_mismatch
+      - price_plausibility_score
+      - merchant_dispute_history_depth
+    difficulty: 1.0
+    difficulty_prior: 0.75
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-04
+    name: Structured data manipulation for price bait
+    family: identity_spoofing
+    rails: [agentic_token]
+    genai_leverage: Feed generation and mutation at catalog scale.
+    mechanism: >
+      Machine-readable price and availability data shown to the agent differs
+      from the price actually authorized, exploiting the fact that the agent
+      compares feeds rather than rendered pages.
+    signals:
+      - feed price to auth amount delta
+      - availability claim unverifiable at fulfilment
+    parameters:
+      auth_to_feed_price_ratio: {type: float, range: [1.05, 3.0], desc: authorized amount over advertised feed price}
+      fields_manipulated: {type: categorical, values: [price, availability, shipping, currency, tax]}
+      currency_switch: {type: bool}
+    defense_hooks:
+      - advertised_vs_authorized_amount_delta
+      - currency_consistency_check
+    difficulty: 0.94
+    difficulty_prior: 0.5
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-05
+    name: Agent session token theft leading to agentic account takeover
+    family: identity_spoofing
+    rails: [agentic_token, card_not_present, account_to_account]
+    genai_leverage: The compromised endpoint is itself an autonomous actor.
+    mechanism: >
+      Compromise of the agent, through host malware, account hijack, or session
+      token theft, yields not one fraudulent transaction but persistent,
+      mandate-aware access to the user's commerce relationships, executable at
+      machine speed across many merchants in parallel.
+    signals:
+      - parallel merchant fan-out beyond human-plausible rate
+      - transactions consistent with mandate but inconsistent with user history
+      - no corresponding user-side interaction events
+    parameters:
+      merchant_fanout: {type: int, range: [2, 80]}
+      duration_minutes: {type: float, range: [1, 1440]}
+      per_txn_amount_usd: {type: float, range: [10, 5000]}
+      mimics_user_history: {type: float, range: [0.0, 1.0]}
+      user_interaction_events: {type: int, range: [0, 5]}
+    defense_hooks:
+      - parallel_merchant_fanout_rate
+      - user_interaction_density
+      - purchase_profile_kl_divergence_from_history
+    difficulty: 0.58
+    difficulty_prior: 0.9
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-06
+    name: Synthetic agent provider registration
+    family: identity_spoofing
+    rails: [agentic_token]
+    genai_leverage: Generated corporate documentation and web presence.
+    mechanism: >
+      Attacker onboards as a legitimate agentic commerce provider using
+      synthetic corporate identity, obtaining a valid provider identifier and
+      the trust that flows with it, then abuses it at scale before detection.
+    signals:
+      - provider identifier issued recently with atypical volume ramp
+      - corporate documentation lacking verifiable third-party trace
+    parameters:
+      provider_age_days: {type: int, range: [1, 180]}
+      volume_ramp_rate: {type: float, range: [1.0, 100.0]}
+      doc_verifiability: {type: float, range: [0.0, 0.8]}
+    defense_hooks:
+      - provider_tenure_vs_volume
+      - onboarding_document_verification_depth
+    difficulty: 0.7
+    status: stub
+
+  - id: IDS-07
+    name: Agent-to-agent collusion ring
+    family: identity_spoofing
+    rails: [agentic_token, card_not_present]
+    genai_leverage: Coordination cost across many identities approaches zero.
+    mechanism: >
+      Buyer-side and merchant-side agents controlled by the same actor transact
+      with each other to launder value, build fake reputation, or farm incentives,
+      with behaviour deliberately decorrelated to defeat pairwise detection.
+    signals:
+      - graph community structure with abnormal reciprocity
+      - fulfilment evidence absent or templated
+    parameters:
+      ring_size: {type: int, range: [3, 200]}
+      reciprocity_ratio: {type: float, range: [0.3, 1.0]}
+      decorrelation_effort: {type: float, range: [0.0, 1.0]}
+      txn_per_pair: {type: int, range: [1, 30]}
+    defense_hooks:
+      - transaction_graph_community_density
+      - reciprocity_and_cycle_detection
+      - fulfilment_evidence_entropy
+    difficulty: 0.0
+    difficulty_prior: 0.8
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: IDS-08
+    name: Agent host fingerprint cloning
+    family: identity_spoofing
+    rails: [card_not_present, agentic_token]
+    genai_leverage: Fingerprint synthesis and mutation automated.
+    mechanism: >
+      Device and environment fingerprints associated with a trusted agent host
+      are cloned so that device-reputation signals continue to score the attacker
+      as the legitimate long-tenured device.
+    signals:
+      - fingerprint identical, network path and timing distribution different
+      - clock skew and latency profile inconsistent with claimed geography
+    parameters:
+      fingerprint_fidelity: {type: float, range: [0.8, 1.0]}
+      geo_inconsistency_km: {type: float, range: [0, 15000]}
+      timing_profile_divergence: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - fingerprint_vs_network_path_consistency
+      - latency_geography_plausibility
+    difficulty: 0.65
+    status: stub
+
+# ---------------------------------------------------------------------------
+# FAMILY: classical_genai  (control group for the headline experiment)
+# ---------------------------------------------------------------------------
+
+  - id: CGA-01
+    name: Real-time voice clone against step-up authentication
+    family: classical_genai
+    rails: [card_not_present, account_to_account, instant_payment]
+    genai_leverage: Few seconds of reference audio yields real-time cloned speech.
+    mechanism: >
+      Attacker defeats voice biometric or call-centre verification during a
+      step-up challenge, converting a declined or challenged transaction into an
+      approved one.
+    signals:
+      - step-up challenge passed with atypical response latency
+      - audio spectral artefacts
+      - challenge originated from a device not previously enrolled
+    parameters:
+      clone_quality: {type: float, range: [0.5, 0.99]}
+      reference_audio_seconds: {type: float, range: [3, 300]}
+      challenge_type: {type: categorical, values: [voice_biometric, call_centre, ivr_passphrase]}
+      response_latency_ms: {type: int, range: [80, 3000]}
+    defense_hooks:
+      - stepup_response_latency_distribution
+      - liveness_artefact_score
+      - device_enrolment_history
+    difficulty: 0.9
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-02
+    name: Deepfake identity verification bypass
+    family: classical_genai
+    rails: [card_not_present, account_to_account]
+    genai_leverage: Photoreal document and face synthesis on commodity hardware.
+    mechanism: >
+      Synthetic face and document artefacts defeat onboarding ID and verification,
+      producing a fully enrolled account or agentic credential under a controlled
+      identity.
+    signals:
+      - injection rather than capture at the camera layer
+      - document template consistency without issuing-authority verification
+    parameters:
+      injection_method: {type: categorical, values: [virtual_camera, emulator, replay, physical_display]}
+      artefact_level: {type: float, range: [0.0, 0.6]}
+      document_type: {type: categorical, values: [passport, national_id, licence, utility_bill]}
+    defense_hooks:
+      - capture_channel_integrity
+      - passive_liveness_score
+    difficulty: 0.65
+    status: stub
+
+  - id: CGA-03
+    name: LLM-personalised phishing at scale
+    family: classical_genai
+    rails: [card_not_present, account_to_account]
+    genai_leverage: Per-target personalisation at the cost of bulk sending.
+    mechanism: >
+      Individually tailored lures derived from public and breached data raise
+      conversion by an order of magnitude over template phishing, feeding
+      downstream credential and card compromise.
+    signals:
+      - credential use from novel geography shortly after lure delivery window
+      - clustered compromise across a targeted cohort
+    parameters:
+      personalisation_depth: {type: float, range: [0.0, 1.0]}
+      cohort_size: {type: int, range: [50, 500000]}
+      conversion_rate: {type: float, range: [0.001, 0.15]}
+      time_to_use_hours: {type: float, range: [0.1, 168]}
+    defense_hooks:
+      - cohort_compromise_clustering
+      - credential_use_geo_novelty
+    difficulty: 0.14
+    difficulty_prior: 0.45
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-04
+    name: Authorized push payment social engineering
+    family: classical_genai
+    rails: [instant_payment, account_to_account]
+    genai_leverage: Sustained, adaptive, multi-channel persuasion without human effort.
+    mechanism: >
+      The victim authorizes the payment themselves, so every credential,
+      device, and behavioural signal at authorization is genuine. The fraud lives
+      entirely in the intent layer. This is the closest classical analogue to
+      agentic fraud and belongs in the same conceptual bucket.
+    signals:
+      - first-time payee with high value
+      - session duration and hesitation patterns atypical for the user
+      - concurrent inbound call or messaging session
+    parameters:
+      grooming_duration_hours: {type: float, range: [0.5, 720]}
+      channels_used: {type: int, range: [1, 4]}
+      payee_novelty: {type: bool}
+      amount_vs_balance_ratio: {type: float, range: [0.05, 1.0]}
+      victim_hesitation_score: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - first_time_payee_value_risk
+      - session_hesitation_biometrics
+      - concurrent_channel_activity_flag
+    difficulty: 1.0
+    difficulty_prior: 0.85
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-05
+    name: Synthetic identity manufacture at scale
+    family: classical_genai
+    rails: [card_not_present, account_to_account]
+    genai_leverage: Coherent identity backstories, documents, and digital footprints.
+    mechanism: >
+      Fabricated identities are aged through small legitimate activity, then
+      used for credit or credential acquisition and eventual bust-out.
+    signals:
+      - thin file with unusually clean early behaviour
+      - shared attributes across supposedly unrelated identities
+    parameters:
+      aging_months: {type: int, range: [1, 36]}
+      attribute_reuse_rate: {type: float, range: [0.0, 0.6]}
+      cohort_size: {type: int, range: [10, 10000]}
+      bustout_multiple: {type: float, range: [2.0, 30.0]}
+    defense_hooks:
+      - identity_attribute_graph_overlap
+      - thin_file_behaviour_purity
+    difficulty: 1.0
+    difficulty_prior: 0.6
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-06
+    name: Adaptive card testing swarm
+    family: classical_genai
+    rails: [card_not_present]
+    genai_leverage: Model-driven retry policy adapts to decline reason codes live.
+    mechanism: >
+      Rather than brute-forcing at fixed rate, the swarm reads decline responses
+      and adapts amount, merchant, timing, and geography to stay under velocity
+      thresholds while maximising validation throughput.
+    signals:
+      - low-value authorizations across many BINs with structured decline pattern
+      - adaptation visible as declining decline rate over time
+    parameters:
+      probe_amount_usd: {type: float, range: [0.1, 5.0]}
+      bins_touched: {type: int, range: [5, 5000]}
+      adaptation_rate: {type: float, range: [0.0, 1.0]}
+      merchant_rotation: {type: int, range: [1, 50]}
+      requests_per_minute: {type: int, range: [1, 2000]}
+    defense_hooks:
+      - decline_rate_trajectory_per_source
+      - bin_dispersion_entropy
+      - micro_amount_probe_density
+    difficulty: 0.82
+    difficulty_prior: 0.4
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-07
+    name: Investment and romance scam scripting
+    family: classical_genai
+    rails: [instant_payment, account_to_account]
+    genai_leverage: Persistent conversational presence across thousands of targets.
+    mechanism: >
+      Long-horizon relationship building culminates in victim-authorized
+      transfers, often escalating in value and moving to less reversible rails.
+    signals:
+      - escalating transfer series to a payee cohort
+      - rail migration toward irreversibility
+    parameters:
+      relationship_days: {type: int, range: [7, 540]}
+      escalation_slope: {type: float, range: [1.05, 5.0]}
+      transfers_count: {type: int, range: [2, 60]}
+      rail_migration: {type: bool}
+    defense_hooks:
+      - payee_escalation_slope
+      - rail_irreversibility_migration_flag
+    difficulty: 0.8
+    status: stub
+
+  - id: CGA-08
+    name: Call centre human-agent social engineering
+    family: classical_genai
+    rails: [card_not_present, account_to_account]
+    genai_leverage: Scripted, emotionally calibrated pressure with perfect recall of stolen PII.
+    mechanism: >
+      The attack target is the issuer's own staff. Attacker uses synthesised
+      context to pass knowledge-based authentication and obtain credential
+      reissue, limit increases, or payee additions.
+    signals:
+      - servicing action followed rapidly by high-value spend
+      - KBA passed with atypical answer latency
+    parameters:
+      kba_pass_confidence: {type: float, range: [0.5, 1.0]}
+      servicing_action: {type: categorical, values: [reissue, limit_increase, payee_add, address_change, mandate_grant]}
+      time_to_spend_minutes: {type: float, range: [1, 2880]}
+    defense_hooks:
+      - servicing_action_to_spend_latency
+      - kba_answer_latency_profile
+    difficulty: 0.8
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-09
+    name: Conversational OTP relay
+    family: classical_genai
+    rails: [card_not_present, instant_payment]
+    genai_leverage: Natural-sounding real-time interception without a human operator.
+    mechanism: >
+      An automated conversational front end contacts the victim in the moments
+      after a genuine challenge is triggered and relays the one-time code to the
+      attacker's session in real time.
+    signals:
+      - OTP consumed from a session distinct from the one that requested it
+      - very tight timing between issuance and use
+    parameters:
+      relay_latency_seconds: {type: float, range: [3, 120]}
+      session_mismatch: {type: bool}
+      contact_channel: {type: categorical, values: [voice, sms, chat, push]}
+      success_rate: {type: float, range: [0.05, 0.6]}
+    defense_hooks:
+      - otp_issuance_to_use_session_binding
+      - challenge_response_channel_correlation
+    difficulty: 1.0
+    difficulty_prior: 0.5
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: CGA-10
+    name: Merchant onboarding document forgery
+    family: classical_genai
+    rails: [card_not_present, b2b_invoice]
+    genai_leverage: Convincing incorporation, banking, and trading documents.
+    mechanism: >
+      Fraudulent merchants are onboarded to acquiring using synthetic
+      documentation, then used for transaction laundering or bust-out.
+    signals:
+      - document metadata inconsistency
+      - processing volume misaligned with declared business model
+    parameters:
+      doc_quality: {type: float, range: [0.5, 0.98]}
+      declared_vs_actual_mcc_mismatch: {type: bool}
+      ramp_to_volume_days: {type: int, range: [3, 120]}
+    defense_hooks:
+      - declared_business_model_vs_txn_profile
+      - document_metadata_forensics
+    difficulty: 0.55
+    status: stub
+
+# ---------------------------------------------------------------------------
+# FAMILY: cross_rail
+# ---------------------------------------------------------------------------
+
+  - id: XRL-01
+    name: Refund and item-not-received abuse
+    family: cross_rail
+    rails: [card_not_present, agentic_token]
+    genai_leverage: Persuasive, individualised claim narratives generated instantly.
+    mechanism: >
+      Attacker or opportunistic user files fabricated non-delivery or
+      not-as-described claims, with narratives tuned to the merchant's own
+      published policy language.
+    signals:
+      - claim rate per account far above cohort
+      - narrative similarity clustering across unrelated accounts
+    parameters:
+      claims_per_account: {type: int, range: [1, 40]}
+      narrative_similarity: {type: float, range: [0.0, 0.95]}
+      claim_value_usd: {type: float, range: [20, 3000]}
+      policy_language_mirroring: {type: float, range: [0.0, 1.0]}
+    defense_hooks:
+      - account_claim_rate_vs_cohort
+      - claim_narrative_embedding_cluster_density
+    difficulty: 0.98
+    difficulty_prior: 0.5
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: XRL-02
+    name: Automated friendly fraud chargeback farming
+    family: cross_rail
+    rails: [card_not_present]
+    genai_leverage: Dispute filing and representment rebuttal automated per case.
+    mechanism: >
+      Disputes are filed at volume with reason codes selected to maximise win
+      probability given merchant category and evidence norms.
+    signals:
+      - reason code selection statistically optimal rather than natural
+      - dispute filed close to the deadline boundary
+    parameters:
+      disputes_per_account: {type: int, range: [1, 25]}
+      reason_code_optimality: {type: float, range: [0.0, 1.0]}
+      days_to_deadline: {type: int, range: [0, 120]}
+    defense_hooks:
+      - reason_code_selection_entropy
+      - dispute_timing_boundary_clustering
+    difficulty: 0.45
+    status: stub
+
+  - id: XRL-03
+    name: Stored value and gift card drain via mandate
+    family: cross_rail
+    rails: [stored_value, agentic_token]
+    genai_leverage: Agent flows can purchase and redeem instruments without human review.
+    mechanism: >
+      The agent is induced to purchase gift cards or stored-value instruments and
+      disclose the codes, converting card credit into an irreversible instrument
+      in a single mandate-compliant step.
+    signals:
+      - stored value MCC purchase inconsistent with stated task
+      - code disclosure event in agent output
+    parameters:
+      instrument_count: {type: int, range: [1, 30]}
+      face_value_usd: {type: float, range: [25, 1000]}
+      disclosure_channel: {type: categorical, values: [page_form, email, chat, api_callback]}
+      task_mcc_consistency: {type: bool}
+    defense_hooks:
+      - stored_value_mcc_vs_task_intent
+      - instrument_code_egress_detection
+    difficulty: 0.94
+    difficulty_prior: 0.6
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: XRL-04
+    name: B2B invoice redirection
+    family: cross_rail
+    rails: [b2b_invoice, account_to_account]
+    genai_leverage: Thread-aware impersonation of a known supplier's correspondence style.
+    mechanism: >
+      Supplier banking details are changed on a genuine payable, frequently via a
+      hijacked email thread and increasingly via agent memory. Single-event
+      losses are large.
+    signals:
+      - bank detail change on an established supplier record
+      - change request arriving out of the normal procurement channel
+    parameters:
+      supplier_relationship_months: {type: int, range: [1, 120]}
+      invoice_value_usd: {type: float, range: [5000, 2000000]}
+      channel_deviation: {type: bool}
+      style_match_quality: {type: float, range: [0.5, 0.99]}
+    defense_hooks:
+      - supplier_bank_detail_change_control
+      - change_request_channel_conformance
+    difficulty: 0.0
+    difficulty_prior: 0.7
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: XRL-05
+    name: Merchant collusion bust-out
+    family: cross_rail
+    rails: [card_not_present]
+    genai_leverage: Coordinated ramp profiles designed to mimic organic growth.
+    mechanism: >
+      A merchant builds legitimate-looking processing history, then spikes volume
+      and disappears before settlement and chargebacks land.
+    signals:
+      - volume ramp shape inconsistent with organic acquisition curves
+      - settlement delay preference and rapid payout requests
+    parameters:
+      ramp_months: {type: int, range: [1, 18]}
+      spike_multiple: {type: float, range: [3.0, 100.0]}
+      payout_acceleration_requests: {type: int, range: [0, 20]}
+    defense_hooks:
+      - merchant_volume_curve_shape_score
+      - payout_timing_pressure_flag
+    difficulty: 0.55
+    status: stub
+
+  - id: XRL-06
+    name: Mule network orchestration
+    family: cross_rail
+    rails: [account_to_account, instant_payment]
+    genai_leverage: Recruitment, instruction, and routing coordinated conversationally at scale.
+    mechanism: >
+      Funds are layered through many low-value accounts with routing decisions
+      adapted in real time to observed friction, defeating static rules.
+    signals:
+      - fan-in fan-out graph motifs
+      - holding time distribution unnaturally short
+    parameters:
+      layers: {type: int, range: [2, 8]}
+      accounts_per_layer: {type: int, range: [3, 100]}
+      holding_time_minutes: {type: float, range: [1, 2880]}
+      adaptive_routing: {type: bool}
+    defense_hooks:
+      - fan_in_fan_out_motif_score
+      - funds_holding_time_distribution
+    difficulty: 1.0
+    difficulty_prior: 0.75
+    difficulty_source: measured_evasion_rate_round_7
+    status: implemented
+
+  - id: XRL-07
+    name: Instant rail irreversibility arbitrage
+    family: cross_rail
+    rails: [instant_payment, account_to_account]
+    genai_leverage: Rail selection optimised per jurisdiction and per victim profile.
+    mechanism: >
+      Attacker deliberately steers value onto rails with the weakest recall
+      mechanics and the shortest intervention window, chosen dynamically.
+    signals:
+      - rail choice inconsistent with transaction purpose and amount
+      - timing aligned to operational coverage gaps
+    parameters:
+      rail_switch_count: {type: int, range: [1, 5]}
+      timing_offset_hours: {type: float, range: [0, 24], desc: offset into low-coverage window}
+      jurisdiction_hops: {type: int, range: [0, 4]}
+    defense_hooks:
+      - rail_choice_vs_purpose_consistency
+      - operational_coverage_window_risk
+    difficulty: 0.65
+    status: stub
+
+# ---------------------------------------------------------------------------
+
+coverage_summary:
+  total_vectors: 42
+  by_family:
+    agent_hijack: 9
+    mandate_abuse: 8
+    identity_spoofing: 8
+    classical_genai: 10
+    cross_rail: 7
+  status_note: >
+    `status: implemented` marks the intended build set, 29 vectors. It is
+    aspirational until the generator exists. Build in tier order and let the
+    tail slip if time runs out; tier 1 alone is sufficient for the headline
+    experiment.
+  build_order:
+    tier_1_must_have: [AGH-01, AGH-09, MND-01, MND-02, MND-05, IDS-05, CGA-01, CGA-03, CGA-04, CGA-05, CGA-06, CGA-09]
+    tier_2_high_value: [AGH-02, AGH-03, AGH-04, AGH-07, MND-03, MND-04, IDS-01, IDS-03, XRL-03, XRL-04]
+    tier_3_if_time: [MND-07, IDS-02, IDS-07, IDS-04, CGA-08, XRL-01, XRL-06]
+  headline_experiment:
+    control_set: [CGA-01, CGA-03, CGA-05, CGA-06, CGA-09]
+    treatment_set: [AGH-01, AGH-09, MND-01, MND-02, MND-05, IDS-05]
+    claim: >
+      A conventional transaction-feature detector trained on the control set
+      degrades toward random on the treatment set, because agentic fraud produces
+      clean, fast, successful authorizations. An intent-provenance detector
+      recovers performance without raising decline rate.

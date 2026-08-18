@@ -1,0 +1,1030 @@
+{
+  "config": {
+    "seed": 42,
+    "pop_per_vector": 50,
+    "n_rounds": 8,
+    "mutation_rate": 0.3,
+    "alert_rate": 0.005
+  },
+  "per_vector": {
+    "AGH-01": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.02,
+        0.68,
+        0.88,
+        0.9,
+        0.94
+      ],
+      "final_evasion_rate": 0.94,
+      "surviving_genome_sample": [
+        {
+          "injection_placement": "comment_node",
+          "payload_specificity": 0.28797863225551146,
+          "cart_value_ratio": 1.0093206113780115,
+          "confirmation_suppressed": true,
+          "agent_model_susceptibility": 0.4538912203180463
+        },
+        {
+          "injection_placement": "comment_node",
+          "payload_specificity": 0.12268947654357562,
+          "cart_value_ratio": 1.0093206113780115,
+          "confirmation_suppressed": true,
+          "agent_model_susceptibility": 0.4985500089633102
+        },
+        {
+          "injection_placement": "comment_node",
+          "payload_specificity": 0.28797863225551146,
+          "cart_value_ratio": 1.0093206113780115,
+          "confirmation_suppressed": true,
+          "agent_model_susceptibility": 0.4538912203180463
+        }
+      ]
+    },
+    "AGH-02": {
+      "evasion_curve": [
+        1.0,
+        0.98,
+        0.98,
+        1.0,
+        1.0,
+        0.98,
+        1.0,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "review_count_seeded": 1,
+          "review_recency_days": 27,
+          "price_ratio_to_median": 0.5084895591945673,
+          "seller_account_age_days": 56
+        },
+        {
+          "review_count_seeded": 3,
+          "review_recency_days": 11,
+          "price_ratio_to_median": 0.7085283929786689,
+          "seller_account_age_days": 54
+        },
+        {
+          "review_count_seeded": 44,
+          "review_recency_days": 24,
+          "price_ratio_to_median": 0.745009111961008,
+          "seller_account_age_days": 2
+        }
+      ]
+    },
+    "AGH-03": {
+      "evasion_curve": [
+        0.48,
+        0.76,
+        0.88,
+        0.82,
+        0.86,
+        0.88,
+        0.9,
+        0.88
+      ],
+      "final_evasion_rate": 0.88,
+      "surviving_genome_sample": [
+        {
+          "tag_type": "meta",
+          "endpoint_mismatch": false,
+          "obfuscation_level": 0.021148302994960955
+        },
+        {
+          "tag_type": "json_ld",
+          "endpoint_mismatch": false,
+          "obfuscation_level": 0.44718721406319006
+        },
+        {
+          "tag_type": "off_canvas",
+          "endpoint_mismatch": false,
+          "obfuscation_level": 0.1197501267600034
+        }
+      ]
+    },
+    "AGH-04": {
+      "evasion_curve": [
+        0.56,
+        0.72,
+        0.82,
+        0.78,
+        0.82,
+        0.9,
+        0.92,
+        0.9
+      ],
+      "final_evasion_rate": 0.9,
+      "surviving_genome_sample": [
+        {
+          "domain_age_days": 272,
+          "query_intent": "physical_goods",
+          "serp_rank": 5,
+          "requested_amount_usd": 195.52909854767142
+        },
+        {
+          "domain_age_days": 169,
+          "query_intent": "subscription",
+          "serp_rank": 4,
+          "requested_amount_usd": 83.18052299422547
+        },
+        {
+          "domain_age_days": 228,
+          "query_intent": "physical_goods",
+          "serp_rank": 10,
+          "requested_amount_usd": 77.11648909427801
+        }
+      ]
+    },
+    "AGH-07": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "spoof_quality": 0.5738720163503487,
+          "dmarc_pass": true,
+          "instruction_type": "urgency_payment",
+          "thread_hijack": false
+        },
+        {
+          "spoof_quality": 0.08363153437556237,
+          "dmarc_pass": true,
+          "instruction_type": "payee_change",
+          "thread_hijack": false
+        },
+        {
+          "spoof_quality": 0.18504171926812185,
+          "dmarc_pass": false,
+          "instruction_type": "urgency_payment",
+          "thread_hijack": true
+        }
+      ]
+    },
+    "AGH-09": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.04,
+        0.78,
+        0.92,
+        0.84,
+        0.82,
+        0.94
+      ],
+      "final_evasion_rate": 0.94,
+      "surviving_genome_sample": [
+        {
+          "turns_to_drift": 22,
+          "per_turn_nudge_magnitude": 0.01395413849698026,
+          "category_drift": true
+        },
+        {
+          "turns_to_drift": 10,
+          "per_turn_nudge_magnitude": 0.025434306614983773,
+          "category_drift": true
+        },
+        {
+          "turns_to_drift": 22,
+          "per_turn_nudge_magnitude": 0.01395413849698026,
+          "category_drift": true
+        }
+      ]
+    },
+    "CGA-01": {
+      "evasion_curve": [
+        0.92,
+        0.82,
+        0.82,
+        0.82,
+        0.8,
+        0.84,
+        0.82,
+        0.9
+      ],
+      "final_evasion_rate": 0.9,
+      "surviving_genome_sample": [
+        {
+          "clone_quality": 0.7760436718098057,
+          "reference_audio_seconds": 121.97637668882155,
+          "challenge_type": "voice_biometric",
+          "response_latency_ms": 770
+        },
+        {
+          "clone_quality": 0.5553825177511104,
+          "reference_audio_seconds": 49.435822637314295,
+          "challenge_type": "voice_biometric",
+          "response_latency_ms": 2445
+        },
+        {
+          "clone_quality": 0.8668122678810415,
+          "reference_audio_seconds": 203.34659899690988,
+          "challenge_type": "voice_biometric",
+          "response_latency_ms": 1188
+        }
+      ]
+    },
+    "CGA-03": {
+      "evasion_curve": [
+        0.08,
+        0.18,
+        0.12,
+        0.22,
+        0.06,
+        0.0,
+        0.08,
+        0.14
+      ],
+      "final_evasion_rate": 0.14,
+      "surviving_genome_sample": [
+        {
+          "personalisation_depth": 0.7233375496070608,
+          "cohort_size": 189378,
+          "conversion_rate": 0.006105687594510108,
+          "time_to_use_hours": 45.60862312830566
+        },
+        {
+          "personalisation_depth": 0.1421600074876097,
+          "cohort_size": 199016,
+          "conversion_rate": 0.04656425864094257,
+          "time_to_use_hours": 68.81875376645127
+        },
+        {
+          "personalisation_depth": 0.0,
+          "cohort_size": 199016,
+          "conversion_rate": 0.04656425864094257,
+          "time_to_use_hours": 68.81875376645127
+        }
+      ]
+    },
+    "CGA-04": {
+      "evasion_curve": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "grooming_duration_hours": 180.19887971207302,
+          "channels_used": 4,
+          "payee_novelty": true,
+          "amount_vs_balance_ratio": 0.6331158437808437,
+          "victim_hesitation_score": 0.17568322067202935
+        },
+        {
+          "grooming_duration_hours": 619.9849519767039,
+          "channels_used": 4,
+          "payee_novelty": true,
+          "amount_vs_balance_ratio": 0.6530702922517103,
+          "victim_hesitation_score": 0.5947706404295813
+        },
+        {
+          "grooming_duration_hours": 347.9636507944591,
+          "channels_used": 2,
+          "payee_novelty": true,
+          "amount_vs_balance_ratio": 0.23003849357010386,
+          "victim_hesitation_score": 0.93557909216909
+        }
+      ]
+    },
+    "CGA-05": {
+      "evasion_curve": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "aging_months": 24,
+          "attribute_reuse_rate": 0.0030043001811617563,
+          "cohort_size": 1442,
+          "bustout_multiple": 21.806957446387415
+        },
+        {
+          "aging_months": 21,
+          "attribute_reuse_rate": 0.5210728645329408,
+          "cohort_size": 3309,
+          "bustout_multiple": 6.233683494828628
+        },
+        {
+          "aging_months": 10,
+          "attribute_reuse_rate": 0.2876501100589827,
+          "cohort_size": 698,
+          "bustout_multiple": 7.841599677326887
+        }
+      ]
+    },
+    "CGA-06": {
+      "evasion_curve": [
+        0.84,
+        0.68,
+        0.88,
+        0.78,
+        0.84,
+        0.84,
+        0.78,
+        0.82
+      ],
+      "final_evasion_rate": 0.82,
+      "surviving_genome_sample": [
+        {
+          "probe_amount_usd": 2.680887269564611,
+          "bins_touched": 2458,
+          "adaptation_rate": 0.4327188608952396,
+          "merchant_rotation": 45,
+          "requests_per_minute": 1139
+        },
+        {
+          "probe_amount_usd": 4.721408334430931,
+          "bins_touched": 483,
+          "adaptation_rate": 0.8325701801221117,
+          "merchant_rotation": 47,
+          "requests_per_minute": 1822
+        },
+        {
+          "probe_amount_usd": 4.190787278229607,
+          "bins_touched": 893,
+          "adaptation_rate": 0.5636394472909834,
+          "merchant_rotation": 29,
+          "requests_per_minute": 197
+        }
+      ]
+    },
+    "CGA-08": {
+      "evasion_curve": [
+        0.8,
+        0.88,
+        0.8,
+        0.82,
+        0.92,
+        0.88,
+        0.76,
+        0.8
+      ],
+      "final_evasion_rate": 0.8,
+      "surviving_genome_sample": [
+        {
+          "kba_pass_confidence": 0.9751999357202092,
+          "servicing_action": "limit_increase",
+          "time_to_spend_minutes": 1677.6362003013853
+        },
+        {
+          "kba_pass_confidence": 0.9166221124315166,
+          "servicing_action": "reissue",
+          "time_to_spend_minutes": 2768.7649780963247
+        },
+        {
+          "kba_pass_confidence": 0.9075957836472247,
+          "servicing_action": "limit_increase",
+          "time_to_spend_minutes": 388.2701933969155
+        }
+      ]
+    },
+    "CGA-09": {
+      "evasion_curve": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "relay_latency_seconds": 48.67197902528793,
+          "session_mismatch": true,
+          "contact_channel": "sms",
+          "success_rate": 0.521800410817063
+        },
+        {
+          "relay_latency_seconds": 45.5332171722854,
+          "session_mismatch": true,
+          "contact_channel": "sms",
+          "success_rate": 0.20565410427661635
+        },
+        {
+          "relay_latency_seconds": 87.40608814490349,
+          "session_mismatch": true,
+          "contact_channel": "chat",
+          "success_rate": 0.3978830160125254
+        }
+      ]
+    },
+    "IDS-01": {
+      "evasion_curve": [
+        0.8,
+        0.76,
+        0.86,
+        0.86,
+        0.8,
+        0.86,
+        0.84,
+        0.78
+      ],
+      "final_evasion_rate": 0.78,
+      "surviving_genome_sample": [
+        {
+          "impersonated_agent": "shopping_agent",
+          "attestation_present": true,
+          "asn_consistency": false,
+          "request_volume_per_hour": 6175
+        },
+        {
+          "impersonated_agent": "browser_agent",
+          "attestation_present": true,
+          "asn_consistency": true,
+          "request_volume_per_hour": 57218
+        },
+        {
+          "impersonated_agent": "shopping_agent",
+          "attestation_present": false,
+          "asn_consistency": true,
+          "request_volume_per_hour": 80666
+        }
+      ]
+    },
+    "IDS-02": {
+      "evasion_curve": [
+        1.0,
+        0.98,
+        1.0,
+        1.0,
+        0.96,
+        1.0,
+        0.98,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "concurrent_origins": 16,
+          "behavioural_divergence": 0.6363073743972579,
+          "credential_age_days": 254
+        },
+        {
+          "concurrent_origins": 10,
+          "behavioural_divergence": 0.5299612351726262,
+          "credential_age_days": 124
+        },
+        {
+          "concurrent_origins": 11,
+          "behavioural_divergence": 0.29991625704351466,
+          "credential_age_days": 71
+        }
+      ]
+    },
+    "IDS-03": {
+      "evasion_curve": [
+        1.0,
+        0.98,
+        0.98,
+        0.98,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "schema_completeness": 0.9899610704298937,
+          "price_ratio_to_market": 0.7295013639818249,
+          "site_age_days": 88,
+          "review_authenticity": 0.07119228228159374,
+          "ssl_valid": false
+        },
+        {
+          "schema_completeness": 0.9567920900493136,
+          "price_ratio_to_market": 0.4951963887505477,
+          "site_age_days": 15,
+          "review_authenticity": 0.47543003803100037,
+          "ssl_valid": true
+        },
+        {
+          "schema_completeness": 0.8344468459924117,
+          "price_ratio_to_market": 0.8312878269487869,
+          "site_age_days": 36,
+          "review_authenticity": 0.1685860759604098,
+          "ssl_valid": true
+        }
+      ]
+    },
+    "IDS-04": {
+      "evasion_curve": [
+        0.9,
+        0.98,
+        0.98,
+        0.96,
+        0.92,
+        0.94,
+        0.9,
+        0.94
+      ],
+      "final_evasion_rate": 0.94,
+      "surviving_genome_sample": [
+        {
+          "auth_to_feed_price_ratio": 2.6917441799615895,
+          "fields_manipulated": "shipping",
+          "currency_switch": false
+        },
+        {
+          "auth_to_feed_price_ratio": 1.5354553165011726,
+          "fields_manipulated": "tax",
+          "currency_switch": true
+        },
+        {
+          "auth_to_feed_price_ratio": 2.0167892893354082,
+          "fields_manipulated": "shipping",
+          "currency_switch": true
+        }
+      ]
+    },
+    "IDS-05": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02,
+        0.58
+      ],
+      "final_evasion_rate": 0.58,
+      "surviving_genome_sample": [
+        {
+          "merchant_fanout": 3,
+          "duration_minutes": 481.11899489763596,
+          "per_txn_amount_usd": 37.9186359692506,
+          "mimics_user_history": 0.13820804212288118,
+          "user_interaction_events": 2
+        },
+        {
+          "merchant_fanout": 3,
+          "duration_minutes": 481.11899489763596,
+          "per_txn_amount_usd": 37.9186359692506,
+          "mimics_user_history": 0.13820804212288118,
+          "user_interaction_events": 2
+        },
+        {
+          "merchant_fanout": 3,
+          "duration_minutes": 481.11899489763596,
+          "per_txn_amount_usd": 37.9186359692506,
+          "mimics_user_history": 0.0,
+          "user_interaction_events": 2
+        }
+      ]
+    },
+    "IDS-07": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "ring_size": 123,
+          "reciprocity_ratio": 0.974586512959406,
+          "decorrelation_effort": 0.6157924173136686,
+          "txn_per_pair": 23
+        },
+        {
+          "ring_size": 92,
+          "reciprocity_ratio": 0.8287335523919357,
+          "decorrelation_effort": 0.8567004639646421,
+          "txn_per_pair": 27
+        },
+        {
+          "ring_size": 44,
+          "reciprocity_ratio": 0.6018458461567548,
+          "decorrelation_effort": 0.4951320635439952,
+          "txn_per_pair": 5
+        }
+      ]
+    },
+    "MND-01": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "dormancy_days": 53,
+          "write_channel": "document",
+          "payee_delta": "account_number",
+          "value_at_risk_usd": 239978.7261708426
+        },
+        {
+          "dormancy_days": 17,
+          "write_channel": "support_ticket",
+          "payee_delta": "name_only",
+          "value_at_risk_usd": 27732.091720674845
+        },
+        {
+          "dormancy_days": 55,
+          "write_channel": "email",
+          "payee_delta": "full_replace",
+          "value_at_risk_usd": 126073.43584719097
+        }
+      ]
+    },
+    "MND-02": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "substitution_type": "line_item_add",
+          "value_uplift_ratio": 2.8490102727141475,
+          "hash_validation_bypassed": false,
+          "time_to_substitution_ms": 11613
+        },
+        {
+          "substitution_type": "quantity_inflate",
+          "value_uplift_ratio": 1.9235993472428534,
+          "hash_validation_bypassed": false,
+          "time_to_substitution_ms": 1051
+        },
+        {
+          "substitution_type": "quantity_inflate",
+          "value_uplift_ratio": 1.9965357206191263,
+          "hash_validation_bypassed": false,
+          "time_to_substitution_ms": 5272
+        }
+      ]
+    },
+    "MND-03": {
+      "evasion_curve": [
+        0.06,
+        0.58,
+        0.72,
+        0.78,
+        0.86,
+        0.82,
+        0.82,
+        0.74
+      ],
+      "final_evasion_rate": 0.74,
+      "surviving_genome_sample": [
+        {
+          "increment_count": 3,
+          "per_increment_ratio": 1.2219179025621596,
+          "total_overage_ratio": 1.1479221675502624,
+          "merchant_category": "marketplace"
+        },
+        {
+          "increment_count": 3,
+          "per_increment_ratio": 1.2486635323477269,
+          "total_overage_ratio": 1.1479221675502624,
+          "merchant_category": "marketplace"
+        },
+        {
+          "increment_count": 3,
+          "per_increment_ratio": 1.2219179025621596,
+          "total_overage_ratio": 1.1479221675502624,
+          "merchant_category": "marketplace"
+        }
+      ]
+    },
+    "MND-04": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "cap_proximity": 0.9913882033060023,
+          "split_count": 26,
+          "merchant_spread": 9,
+          "window_hours": 23.10296098017065
+        },
+        {
+          "cap_proximity": 0.9840680396065318,
+          "split_count": 59,
+          "merchant_spread": 7,
+          "window_hours": 132.57089794392937
+        },
+        {
+          "cap_proximity": 0.9211990474157391,
+          "split_count": 7,
+          "merchant_spread": 3,
+          "window_hours": 59.53400389875632
+        }
+      ]
+    },
+    "MND-05": {
+      "evasion_curve": [
+        0.36,
+        0.5,
+        0.66,
+        0.74,
+        0.9,
+        0.92,
+        0.86,
+        0.9
+      ],
+      "final_evasion_rate": 0.9,
+      "surviving_genome_sample": [
+        {
+          "descriptor_edit_distance": 0,
+          "mcc_match": false,
+          "acquirer_mismatch": false,
+          "merchant_tenure_days": 371
+        },
+        {
+          "descriptor_edit_distance": 0,
+          "mcc_match": false,
+          "acquirer_mismatch": false,
+          "merchant_tenure_days": 221
+        },
+        {
+          "descriptor_edit_distance": 0,
+          "mcc_match": true,
+          "acquirer_mismatch": true,
+          "merchant_tenure_days": 532
+        }
+      ]
+    },
+    "MND-07": {
+      "evasion_curve": [
+        0.4,
+        0.74,
+        0.8,
+        0.84,
+        0.88,
+        0.86,
+        0.86,
+        0.86
+      ],
+      "final_evasion_rate": 0.86,
+      "surviving_genome_sample": [
+        {
+          "amount_step_ratio": 2.18479656624318,
+          "frequency_multiplier": 10.043238458532468,
+          "beneficiary_changed": false,
+          "series_age_months": 28
+        },
+        {
+          "amount_step_ratio": 6.704995073572638,
+          "frequency_multiplier": 2.0919077360975016,
+          "beneficiary_changed": false,
+          "series_age_months": 4
+        },
+        {
+          "amount_step_ratio": 1.5522965901854855,
+          "frequency_multiplier": 11.798683339278227,
+          "beneficiary_changed": false,
+          "series_age_months": 48
+        }
+      ]
+    },
+    "XRL-01": {
+      "evasion_curve": [
+        0.28,
+        0.48,
+        0.74,
+        0.88,
+        0.9,
+        0.98,
+        0.94,
+        0.98
+      ],
+      "final_evasion_rate": 0.98,
+      "surviving_genome_sample": [
+        {
+          "claims_per_account": 3,
+          "narrative_similarity": 0.1673076656012887,
+          "claim_value_usd": 172.97595442241177,
+          "policy_language_mirroring": 0.9448119033536632
+        },
+        {
+          "claims_per_account": 36,
+          "narrative_similarity": 0.10303007968572729,
+          "claim_value_usd": 257.10435046909015,
+          "policy_language_mirroring": 0.2750344720694734
+        },
+        {
+          "claims_per_account": 9,
+          "narrative_similarity": 0.47595709108097434,
+          "claim_value_usd": 189.26300816784155,
+          "policy_language_mirroring": 0.01443108861140785
+        }
+      ]
+    },
+    "XRL-03": {
+      "evasion_curve": [
+        0.02,
+        0.4,
+        0.6,
+        0.54,
+        0.52,
+        0.72,
+        0.78,
+        0.94
+      ],
+      "final_evasion_rate": 0.94,
+      "surviving_genome_sample": [
+        {
+          "instrument_count": 1,
+          "face_value_usd": 677.0842423359306,
+          "disclosure_channel": "email",
+          "task_mcc_consistency": true
+        },
+        {
+          "instrument_count": 1,
+          "face_value_usd": 724.3462969237282,
+          "disclosure_channel": "email",
+          "task_mcc_consistency": true
+        },
+        {
+          "instrument_count": 1,
+          "face_value_usd": 152.13135177947817,
+          "disclosure_channel": "chat",
+          "task_mcc_consistency": true
+        }
+      ]
+    },
+    "XRL-04": {
+      "evasion_curve": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "final_evasion_rate": 0.0,
+      "surviving_genome_sample": [
+        {
+          "supplier_relationship_months": 91,
+          "invoice_value_usd": 719094.3335186561,
+          "channel_deviation": true,
+          "style_match_quality": 0.8535492416735915
+        },
+        {
+          "supplier_relationship_months": 102,
+          "invoice_value_usd": 686681.1697838055,
+          "channel_deviation": false,
+          "style_match_quality": 0.8698991992864484
+        },
+        {
+          "supplier_relationship_months": 108,
+          "invoice_value_usd": 1864069.053697419,
+          "channel_deviation": true,
+          "style_match_quality": 0.6597688254619676
+        }
+      ]
+    },
+    "XRL-06": {
+      "evasion_curve": [
+        0.36,
+        0.96,
+        1.0,
+        0.92,
+        1.0,
+        0.96,
+        0.96,
+        1.0
+      ],
+      "final_evasion_rate": 1.0,
+      "surviving_genome_sample": [
+        {
+          "layers": 2,
+          "accounts_per_layer": 59,
+          "holding_time_minutes": 2297.728972214715,
+          "adaptive_routing": true
+        },
+        {
+          "layers": 8,
+          "accounts_per_layer": 82,
+          "holding_time_minutes": 2599.7180766742817,
+          "adaptive_routing": false
+        },
+        {
+          "layers": 7,
+          "accounts_per_layer": 56,
+          "holding_time_minutes": 2285.92600790478,
+          "adaptive_routing": true
+        }
+      ]
+    }
+  },
+  "recovery": {
+    "AGH-01": 0.0,
+    "AGH-02": 0.3333,
+    "AGH-03": 0.3333,
+    "AGH-04": 0.3333,
+    "AGH-07": 1.0,
+    "AGH-09": 0.0,
+    "CGA-01": 0.3333,
+    "CGA-03": 1.0,
+    "CGA-04": 0.0,
+    "CGA-05": 0.0,
+    "CGA-06": 0.0056,
+    "CGA-08": 0.0,
+    "CGA-09": 0.0,
+    "IDS-01": 0.6667,
+    "IDS-02": 0.0,
+    "IDS-03": 0.0,
+    "IDS-04": 0.3333,
+    "IDS-05": 0.1111,
+    "IDS-07": 0.9889,
+    "MND-01": 1.0,
+    "MND-02": 1.0,
+    "MND-03": 0.0,
+    "MND-04": 1.0,
+    "MND-05": 0.0,
+    "MND-07": 0.0,
+    "XRL-01": 0.3333,
+    "XRL-03": 0.6667,
+    "XRL-04": 1.0,
+    "XRL-06": 0.35
+  },
+  "difficulty_updates": {
+    "AGH-01": 0.94,
+    "AGH-02": 1.0,
+    "AGH-03": 0.88,
+    "AGH-04": 0.9,
+    "AGH-07": 0.0,
+    "AGH-09": 0.94,
+    "CGA-01": 0.9,
+    "CGA-03": 0.14,
+    "CGA-04": 1.0,
+    "CGA-05": 1.0,
+    "CGA-06": 0.82,
+    "CGA-08": 0.8,
+    "CGA-09": 1.0,
+    "IDS-01": 0.78,
+    "IDS-02": 1.0,
+    "IDS-03": 1.0,
+    "IDS-04": 0.94,
+    "IDS-05": 0.58,
+    "IDS-07": 0.0,
+    "MND-01": 0.0,
+    "MND-02": 0.0,
+    "MND-03": 0.74,
+    "MND-04": 0.0,
+    "MND-05": 0.9,
+    "MND-07": 0.86,
+    "XRL-01": 0.98,
+    "XRL-03": 0.94,
+    "XRL-04": 0.0,
+    "XRL-06": 1.0
+  }
+}

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARTS — Agentic Red Team Simulator</title>
+  <meta name="description" content="Closed-loop red team system for agentic payment fraud. Mastercard Innovation Challenge @ GFF 2026.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --bg-card-hover: rgba(31, 41, 55, 0.8);
+      --border: rgba(75, 85, 99, 0.4);
+      --border-accent: rgba(99, 102, 241, 0.4);
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-blue: #6366f1;
+      --accent-blue-dim: rgba(99, 102, 241, 0.15);
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-rose: #f43f5e;
+      --accent-amber: #f59e0b;
+      --accent-violet: #8b5cf6;
+      --glow-blue: 0 0 30px rgba(99, 102, 241, 0.15);
+      --glow-rose: 0 0 20px rgba(244, 63, 94, 0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Background gradient mesh */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(10, 14, 23, 0.85);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+    }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 1.25rem; font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 800;
+    }
+    .logo-sub { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; margin-left: 8px; }
+
+    /* Navigation */
+    .nav { display: flex; gap: 2px; }
+    .nav-btn {
+      padding: 8px 16px; border: none; background: transparent;
+      color: var(--text-secondary); font: inherit; font-size: 0.875rem;
+      font-weight: 500; cursor: pointer; border-radius: var(--radius-sm);
+      transition: var(--transition); position: relative;
+    }
+    .nav-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+    .nav-btn.active {
+      color: var(--accent-blue); background: var(--accent-blue-dim);
+    }
+
+    /* Main layout */
+    .main { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; position: relative; z-index: 1; }
+    .panel { display: none; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      transition: var(--transition);
+    }
+    .card:hover { border-color: var(--border-accent); box-shadow: var(--glow-blue); }
+    .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .card-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+    /* Grid */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .badge-blue { background: var(--accent-blue-dim); color: var(--accent-blue); }
+    .badge-emerald { background: rgba(16,185,129,0.15); color: var(--accent-emerald); }
+    .badge-rose { background: rgba(244,63,94,0.15); color: var(--accent-rose); }
+    .badge-amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+    .badge-violet { background: rgba(139,92,246,0.15); color: var(--accent-violet); }
+    .badge-cyan { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .stat-card {
+      flex: 1; min-width: 180px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      backdrop-filter: blur(12px);
+    }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-value { font-size: 2rem; font-weight: 700; margin-top: 4px; line-height: 1.2; }
+    .stat-sub { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+
+    /* Vector list */
+    .vector-list { display: flex; flex-direction: column; gap: 8px; max-height: 600px; overflow-y: auto; }
+    .vector-item {
+      padding: 12px 16px; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.02); border: 1px solid transparent;
+      cursor: pointer; transition: var(--transition);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .vector-item:hover { background: rgba(255,255,255,0.05); border-color: var(--border); }
+    .vector-item.selected { background: var(--accent-blue-dim); border-color: var(--accent-blue); }
+    .vector-item .vid { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-blue); min-width: 60px; }
+    .vector-item .vname { font-size: 0.875rem; flex: 1; }
+    .vector-item .vfamily { font-size: 0.7rem; color: var(--text-muted); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px; border: none; border-radius: var(--radius-sm);
+      font: inherit; font-size: 0.875rem; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      color: white; box-shadow: 0 4px 15px rgba(99,102,241,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.4); }
+    .btn-secondary {
+      background: rgba(255,255,255,0.05); color: var(--text-secondary);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+    /* Detail pane */
+    .detail-pane { padding: 1.5rem; }
+    .detail-section { margin-bottom: 1.5rem; }
+    .detail-section h3 {
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text-muted); margin-bottom: 0.75rem;
+    }
+    .mechanism-text { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+    .signal-list { list-style: none; }
+    .signal-list li {
+      padding: 6px 0; font-size: 0.85rem; color: var(--text-secondary);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .signal-list li::before { content: '→'; color: var(--accent-cyan); flex-shrink: 0; }
+
+    /* Param table */
+    .param-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .param-table th {
+      text-align: left; padding: 8px 12px; color: var(--text-muted);
+      border-bottom: 1px solid var(--border); font-weight: 500;
+    }
+    .param-table td {
+      padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    }
+    .param-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* Record viewer */
+    .record-viewer {
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem;
+      font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+      max-height: 400px; overflow-y: auto; line-height: 1.8;
+      white-space: pre-wrap; word-break: break-all;
+    }
+    .record-key { color: var(--accent-cyan); }
+    .record-str { color: var(--accent-emerald); }
+    .record-num { color: var(--accent-amber); }
+    .record-bool { color: var(--accent-violet); }
+    .record-null { color: var(--text-muted); }
+
+    /* Two-panel verdict */
+    .verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .verdict-panel { position: relative; }
+    .verdict-panel .panel-label {
+      position: absolute; top: -10px; left: 16px; padding: 2px 10px;
+      font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; border-radius: 4px; z-index: 1;
+    }
+    .verdict-panel.network .panel-label { background: var(--accent-blue); color: white; }
+    .verdict-panel.attested .panel-label { background: var(--accent-emerald); color: white; }
+
+    .score-display {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      border-radius: var(--radius-sm); margin-top: 1rem;
+    }
+    .score-display.safe { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+    .score-display.flagged { background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3); }
+    .score-value { font-size: 1.5rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .score-label { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .invariant-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.75rem; }
+    .invariant-chip {
+      padding: 4px 10px; border-radius: 6px; font-size: 0.7rem;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.3);
+      color: var(--accent-rose);
+    }
+    .invariant-chip.ok {
+      background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.2);
+      color: var(--text-muted);
+    }
+
+    /* Chart area */
+    .chart-container { position: relative; padding: 1rem 0; }
+    .bar-chart { display: flex; flex-direction: column; gap: 8px; }
+    .bar-row { display: flex; align-items: center; gap: 12px; }
+    .bar-label { min-width: 200px; font-size: 0.8rem; color: var(--text-secondary); text-align: right; }
+    .bar-track { flex: 1; height: 28px; background: rgba(255,255,255,0.03); border-radius: 6px; overflow: hidden; position: relative; }
+    .bar-fill {
+      height: 100%; border-radius: 6px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; align-items: center; padding-left: 8px;
+      font-size: 0.7rem; font-weight: 600; color: white;
+      min-width: 40px;
+    }
+    .bar-value { min-width: 60px; text-align: right; font-size: 0.8rem; font-family: 'JetBrains Mono', monospace; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 3rem; color: var(--text-muted); }
+    .spinner {
+      display: inline-block; width: 24px; height: 24px;
+      border: 3px solid var(--border); border-top-color: var(--accent-blue);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .grid-2, .verdict-grid { grid-template-columns: 1fr; }
+      .stats-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">A</div>
+        <span>ARTS</span>
+        <span class="logo-sub">Agentic Red Team Simulator</span>
+      </div>
+      <nav class="nav">
+        <button class="nav-btn active" onclick="showPanel('taxonomy')" id="nav-taxonomy">Attack Vectors</button>
+        <button class="nav-btn" onclick="showPanel('generate')" id="nav-generate">Live Generation</button>
+        <button class="nav-btn" onclick="showPanel('verdict')" id="nav-verdict">Detection Verdict</button>
+        <button class="nav-btn" onclick="showPanel('results')" id="nav-results">Arm Comparison</button>
+        <button class="nav-btn" onclick="showPanel('coevolution')" id="nav-coevolution">Coevolution</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Panel 1: Attack Taxonomy -->
+    <div id="panel-taxonomy" class="panel active">
+      <div class="stats-row" id="taxonomy-stats"></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Attack Vectors</div>
+          <div class="card-subtitle">Select a vector to explore its mechanism and genome</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap" id="family-filters"></div>
+          <div class="vector-list" id="vector-list"></div>
+        </div>
+        <div class="card" id="vector-detail">
+          <div class="detail-pane">
+            <p class="mechanism-text" style="color:var(--text-muted)">← Select an attack vector to see details</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 2: Live Generation -->
+    <div id="panel-generate" class="panel">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <div class="card-title" style="margin:0">Generate Attack Episode</div>
+          <select id="gen-vector-select" style="padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);border-radius:var(--radius-sm);font:inherit;font-size:0.85rem"></select>
+          <button class="btn btn-primary" onclick="generateEpisode()">⚡ Generate</button>
+          <button class="btn btn-secondary" onclick="detectGenerated()">🔍 Run Detection</button>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Sampled Genome</div>
+          <div class="card-subtitle">Parameter values drawn from taxonomy ranges</div>
+          <div class="record-viewer" id="genome-viewer">Click Generate to sample a genome</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Authorization Records</div>
+          <div class="card-subtitle">Complete auth record as the generator emits it</div>
+          <div class="record-viewer" id="records-viewer">Click Generate to produce records</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel 3: Detection Verdict -->
+    <div id="panel-verdict" class="panel">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-title">Two-Panel Verdict</div>
+        <div class="card-subtitle">The same record seen through two views. This panel is the whole pitch.</div>
+      </div>
+      <div id="verdict-content">
+        <p class="loading" style="color:var(--text-muted)">Generate an episode first, then click "Run Detection"</p>
+      </div>
+    </div>
+
+    <!-- Panel 4: Arm Comparison -->
+    <div id="panel-results" class="panel">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-title">Headline Experiment Results</div>
+        <div class="card-subtitle">Seven-arm comparison at 0.5% alert rate on legitimate traffic</div>
+      </div>
+      <div id="results-content"><div class="loading"><div class="spinner"></div><p>Loading results...</p></div></div>
+    </div>
+
+    <!-- Panel 5: Coevolution -->
+    <div id="panel-coevolution" class="panel">
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-title">Coevolution Loop</div>
+        <div class="card-subtitle">Per-round evasion rate as genomes evolve against arm G</div>
+      </div>
+      <div id="coevolution-content"><div class="loading"><div class="spinner"></div><p>Loading...</p></div></div>
+    </div>
+
+  </main>
+
+<script>
+const API = '';
+let taxonomyData = null;
+let lastGeneratedRecords = null;
+let activeFamily = null;
+
+// ---- Navigation ----
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.getElementById('nav-' + id).classList.add('active');
+  if (id === 'results') loadResults();
+  if (id === 'coevolution') loadCoevolution();
+}
+
+// ---- JSON rendering ----
+function renderJSON(obj, indent = 0) {
+  if (obj === null) return '<span class="record-null">null</span>';
+  if (typeof obj === 'boolean') return `<span class="record-bool">${obj}</span>`;
+  if (typeof obj === 'number') return `<span class="record-num">${obj}</span>`;
+  if (typeof obj === 'string') return `<span class="record-str">"${escapeHtml(obj)}"</span>`;
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return '[]';
+    if (obj.length <= 4 && obj.every(x => typeof x !== 'object')) {
+      return '[' + obj.map(x => renderJSON(x)).join(', ') + ']';
+    }
+    const pad = '  '.repeat(indent + 1);
+    const items = obj.map(x => pad + renderJSON(x, indent + 1));
+    return '[\n' + items.join(',\n') + '\n' + '  '.repeat(indent) + ']';
+  }
+  if (typeof obj === 'object') {
+    const keys = Object.keys(obj);
+    if (keys.length === 0) return '{}';
+    const pad = '  '.repeat(indent + 1);
+    const lines = keys.map(k =>
+      pad + `<span class="record-key">"${escapeHtml(k)}"</span>: ${renderJSON(obj[k], indent + 1)}`
+    );
+    return '{\n' + lines.join(',\n') + '\n' + '  '.repeat(indent) + '}';
+  }
+  return String(obj);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---- Taxonomy ----
+async function loadTaxonomy() {
+  const res = await fetch(API + '/api/taxonomy');
+  taxonomyData = await res.json();
+  renderTaxonomy();
+  populateGenerateSelect();
+}
+
+const familyColors = {
+  agent_hijack: 'badge-rose',
+  mandate_abuse: 'badge-amber',
+  identity_spoofing: 'badge-violet',
+  classical_genai: 'badge-blue',
+  cross_rail: 'badge-cyan',
+};
+
+function renderTaxonomy() {
+  const d = taxonomyData;
+  const built = d.coverage.built.length;
+  const total = d.vectors.length;
+  const families = [...new Set(d.vectors.map(v => v.family))];
+
+  document.getElementById('taxonomy-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total Vectors</div><div class="stat-value">${total}</div><div class="stat-sub">${families.length} families</div></div>
+    <div class="stat-card"><div class="stat-label">Generators Built</div><div class="stat-value" style="color:var(--accent-emerald)">${built}</div><div class="stat-sub">of ${d.vectors.filter(v=>v.status==='implemented').length} implemented</div></div>
+    <div class="stat-card"><div class="stat-label">Not Yet Built</div><div class="stat-value" style="color:var(--accent-amber)">${d.coverage.declared_not_built.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Taxonomy Version</div><div class="stat-value" style="font-size:1.3rem">${d.meta.version}</div></div>
+  `;
+
+  document.getElementById('family-filters').innerHTML =
+    `<button class="btn btn-secondary ${!activeFamily ? 'active' : ''}" onclick="filterFamily(null)" style="font-size:0.75rem;padding:5px 12px">All</button>` +
+    families.map(f =>
+      `<button class="btn btn-secondary ${activeFamily === f ? 'active' : ''}" onclick="filterFamily('${f}')" style="font-size:0.75rem;padding:5px 12px">${f.replace(/_/g,' ')}</button>`
+    ).join('');
+
+  const filtered = activeFamily ? d.vectors.filter(v => v.family === activeFamily) : d.vectors;
+  document.getElementById('vector-list').innerHTML = filtered.map(v => `
+    <div class="vector-item" onclick="selectVector('${v.id}')">
+      <span class="vid">${v.id}</span>
+      <span class="vname">${v.name}</span>
+      <span class="badge ${familyColors[v.family] || 'badge-blue'}">${v.family.replace(/_/g,' ')}</span>
+    </div>
+  `).join('');
+}
+
+function filterFamily(f) {
+  activeFamily = f;
+  renderTaxonomy();
+}
+
+function selectVector(vid) {
+  document.querySelectorAll('.vector-item').forEach(el => el.classList.remove('selected'));
+  const items = document.querySelectorAll('.vector-item');
+  items.forEach(el => { if (el.querySelector('.vid').textContent === vid) el.classList.add('selected'); });
+
+  const v = taxonomyData.vectors.find(x => x.id === vid);
+  if (!v) return;
+
+  const params = v.parameters || {};
+  const paramRows = Object.entries(params).map(([k, p]) => {
+    let range = '';
+    if (p.type === 'categorical') range = (p.values || []).join(', ');
+    else if (p.range) range = `[${p.range[0]}, ${p.range[1]}]`;
+    else if (p.type === 'bool') range = 'true / false';
+    return `<tr><td>${k}</td><td>${p.type}</td><td>${range}</td><td style="color:var(--text-muted);font-family:Inter;font-size:0.75rem">${p.desc || ''}</td></tr>`;
+  }).join('');
+
+  document.getElementById('vector-detail').innerHTML = `
+    <div class="detail-pane">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+        <span style="font-family:'JetBrains Mono';font-size:1.2rem;color:var(--accent-blue)">${v.id}</span>
+        <span class="badge ${familyColors[v.family]}">${v.family.replace(/_/g,' ')}</span>
+        <span class="badge ${v.status === 'implemented' ? 'badge-emerald' : 'badge-amber'}">${v.status}</span>
+        <span class="badge badge-violet">difficulty ${v.difficulty}</span>
+      </div>
+      <h2 style="font-size:1.1rem;margin-bottom:0.75rem">${v.name}</h2>
+
+      <div class="detail-section">
+        <h3>GenAI Leverage</h3>
+        <p class="mechanism-text" style="font-style:italic">${v.genai_leverage}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Mechanism</h3>
+        <p class="mechanism-text">${v.mechanism}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>Observable Signals</h3>
+        <ul class="signal-list">
+          ${(v.signals || []).map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>
+
+      ${Object.keys(params).length ? `
+      <div class="detail-section">
+        <h3>Genome Parameters</h3>
+        <table class="param-table">
+          <tr><th>Parameter</th><th>Type</th><th>Range</th><th>Description</th></tr>
+          ${paramRows}
+        </table>
+      </div>` : ''}
+
+      <div class="detail-section">
+        <h3>Defense Hooks</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${(v.defense_hooks || []).map(h => `<span class="badge badge-cyan">${h}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- Live Generation ----
+function populateGenerateSelect() {
+  const sel = document.getElementById('gen-vector-select');
+  const built = taxonomyData.coverage.built;
+  sel.innerHTML = built.map(v => `<option value="${v}">${v} — ${(taxonomyData.vectors.find(x=>x.id===v)||{}).name||''}</option>`).join('');
+}
+
+async function generateEpisode() {
+  const vid = document.getElementById('gen-vector-select').value;
+  if (!vid) return;
+  document.getElementById('genome-viewer').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  document.getElementById('records-viewer').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+  const res = await fetch(API + '/api/generate', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({vector_id: vid, seed: Math.floor(Math.random() * 1e9)})
+  });
+  const data = await res.json();
+  lastGeneratedRecords = data.records;
+
+  document.getElementById('genome-viewer').innerHTML = renderJSON(data.genome);
+  // Show records with key fields highlighted
+  const cleanRecords = data.records.map(r => {
+    const clean = {...r};
+    delete clean.genome; // too large to display inline
+    return clean;
+  });
+  document.getElementById('records-viewer').innerHTML =
+    `<div style="color:var(--text-muted);margin-bottom:8px">// ${data.record_count} record(s) in episode</div>` +
+    renderJSON(cleanRecords);
+}
+
+// ---- Detection Verdict ----
+async function detectGenerated() {
+  if (!lastGeneratedRecords || lastGeneratedRecords.length === 0) {
+    alert('Generate an episode first');
+    return;
+  }
+  showPanel('verdict');
+  document.getElementById('verdict-content').innerHTML = '<div class="loading"><div class="spinner"></div><p>Scoring records...</p></div>';
+
+  const res = await fetch(API + '/api/detect', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({records: lastGeneratedRecords})
+  });
+  const data = await res.json();
+  const r = data.results[0]; // show first record
+
+  const allInvariants = [
+    'mandate_hash_mismatch', 'amount_over_consent', 'intent_cart_distance',
+    'payee_mutated_by_content', 'descriptor_near_miss', 'just_under_cap',
+    'consent_expired', 'terminal_agent_differs', 'otp_session_mismatch'
+  ];
+
+  document.getElementById('verdict-content').innerHTML = `
+    <div class="verdict-grid">
+      <div class="verdict-panel network card">
+        <span class="panel-label">v_network (${r.v_network_fields} fields)</span>
+        <div style="margin-top:1rem">
+          <div class="card-title">Arm A: Supervised Detector</div>
+          <div class="card-subtitle">Trained on classical fraud only</div>
+          <div class="score-display ${r.arm_a_flagged ? 'flagged' : 'safe'}">
+            <div>
+              <div class="score-value" style="color:${r.arm_a_flagged ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">${r.arm_a_score.toFixed(4)}</div>
+              <div class="score-label">${r.arm_a_flagged ? '🚨 FLAGGED' : '✅ PASSED'}</div>
+            </div>
+          </div>
+          <div class="record-viewer" style="max-height:250px;margin-top:1rem">${renderJSON(r.v_network_record)}</div>
+        </div>
+      </div>
+      <div class="verdict-panel attested card">
+        <span class="panel-label">v_attested (${r.v_attested_fields} fields)</span>
+        <div style="margin-top:1rem">
+          <div class="card-title">Arm G: Hybrid Detector</div>
+          <div class="card-subtitle">Novelty + consent invariants (no fraud labels)</div>
+          <div class="score-display ${r.arm_g_flagged ? 'flagged' : 'safe'}">
+            <div>
+              <div class="score-value" style="color:${r.arm_g_flagged ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">${r.arm_g_score.toFixed(4)}</div>
+              <div class="score-label">${r.arm_g_flagged ? '🚨 FLAGGED' : '✅ PASSED'} — ${r.invariant_count} invariant(s) violated</div>
+            </div>
+          </div>
+          <div style="margin-top:0.75rem">
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">CONSENT INVARIANTS</div>
+            <div class="invariant-chips">
+              ${allInvariants.map(inv =>
+                `<span class="invariant-chip ${r.invariants_fired.includes(inv) ? '' : 'ok'}">${r.invariants_fired.includes(inv) ? '✗ ' : '✓ '}${inv}</span>`
+              ).join('')}
+            </div>
+          </div>
+          <div class="record-viewer" style="max-height:250px;margin-top:1rem">${renderJSON(r.v_attested_record)}</div>
+        </div>
+      </div>
+    </div>
+    ${data.results.length > 1 ? `<p style="margin-top:1rem;color:var(--text-muted);font-size:0.8rem">Showing record 1 of ${data.results.length}. This episode produced ${data.results.length} records.</p>` : ''}
+  `;
+}
+
+// ---- Arm Comparison ----
+let resultsLoaded = false;
+async function loadResults() {
+  if (resultsLoaded) return;
+  try {
+    const res = await fetch(API + '/api/results');
+    const data = await res.json();
+    resultsLoaded = true;
+
+    const arms = data.arms;
+    const armNames = Object.keys(arms);
+
+    let html = '<div class="grid-2" style="margin-bottom:1.5rem">';
+    // Treatment Recall chart
+    html += '<div class="card"><div class="card-title">Treatment Recall</div><div class="card-subtitle">Recall on agentic attacks at 0.5% alert rate</div><div class="bar-chart">';
+    const recallColors = ['#6366f1','#6366f1','#06b6d4','#06b6d4','#8b5cf6','#f59e0b','#10b981'];
+    armNames.forEach((name, i) => {
+      const recall = arms[name].treatment?.recall || 0;
+      html += `<div class="bar-row">
+        <div class="bar-label">${name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(recall*100,2)}%;background:${recallColors[i]}">${(recall*100).toFixed(1)}%</div></div>
+        <div class="bar-value">${recall.toFixed(3)}</div>
+      </div>`;
+    });
+    html += '</div></div>';
+
+    // Control AUC chart
+    html += '<div class="card"><div class="card-title">Control AUC</div><div class="card-subtitle">ROC AUC on classical fraud</div><div class="bar-chart">';
+    armNames.forEach((name, i) => {
+      const auc = arms[name].control?.roc_auc || 0;
+      html += `<div class="bar-row">
+        <div class="bar-label">${name}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(auc*100,2)}%;background:${recallColors[i]}">${(auc*100).toFixed(1)}%</div></div>
+        <div class="bar-value">${auc.toFixed(3)}</div>
+      </div>`;
+    });
+    html += '</div></div></div>';
+
+    // Full table
+    html += '<div class="card"><div class="card-title">Full Results Table</div><table class="param-table"><tr><th>Arm</th><th>View</th><th>Kind</th><th>Features</th><th>Ctrl AUC</th><th>Treat AUC</th><th>Treat Recall</th><th>Treat Precision</th><th>Alert Rate</th></tr>';
+    armNames.forEach(name => {
+      const a = arms[name];
+      html += `<tr>
+        <td style="font-weight:600">${name}</td><td>${a.view}</td><td>${a.kind}</td><td>${a.n_features}</td>
+        <td>${a.control?.roc_auc ?? '-'}</td><td>${a.treatment?.roc_auc ?? '-'}</td>
+        <td style="color:${a.treatment?.recall > 0.5 ? 'var(--accent-emerald)' : a.treatment?.recall > 0 ? 'var(--accent-amber)' : 'var(--accent-rose)'};font-weight:600">${a.treatment?.recall ?? '-'}</td>
+        <td>${a.treatment?.precision ?? '-'}</td>
+        <td>${a.treatment?.benign_alert_rate ?? '-'}</td>
+      </tr>`;
+    });
+    html += '</table></div>';
+
+    document.getElementById('results-content').innerHTML = html;
+
+    // Animate bars
+    setTimeout(() => {
+      document.querySelectorAll('.bar-fill').forEach(el => { el.style.width = el.style.width; });
+    }, 100);
+  } catch(e) {
+    document.getElementById('results-content').innerHTML = `<div class="card"><p class="mechanism-text">Could not load results. Run <code>python experiments/headline.py</code> first.</p></div>`;
+  }
+}
+
+// ---- Coevolution ----
+let coevLoaded = false;
+async function loadCoevolution() {
+  if (coevLoaded) return;
+  try {
+    const res = await fetch(API + '/api/coevolution');
+    const data = await res.json();
+    coevLoaded = true;
+
+    const vectors = Object.keys(data.per_vector).sort();
+    let html = '<div class="stats-row">';
+    html += `<div class="stat-card"><div class="stat-label">Rounds</div><div class="stat-value">${data.config.n_rounds}</div></div>`;
+    html += `<div class="stat-card"><div class="stat-label">Pop / Vector</div><div class="stat-value">${data.config.pop_per_vector}</div></div>`;
+    html += `<div class="stat-card"><div class="stat-label">Mutation Rate</div><div class="stat-value">${data.config.mutation_rate}</div></div>`;
+    html += `<div class="stat-card"><div class="stat-label">Vectors Evolved</div><div class="stat-value">${vectors.length}</div></div>`;
+    html += '</div>';
+
+    // Evasion rate table
+    html += '<div class="card" style="margin-bottom:1.5rem"><div class="card-title">Final Evasion Rates</div><div class="card-subtitle">Evasion rate of evolved genomes against arm G at operating point</div><div class="bar-chart">';
+    vectors.forEach(vid => {
+      const rate = data.per_vector[vid].final_evasion_rate || 0;
+      const color = rate > 0.5 ? 'var(--accent-rose)' : rate > 0.2 ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+      html += `<div class="bar-row">
+        <div class="bar-label">${vid}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.max(rate*100,2)}%;background:${color}">${(rate*100).toFixed(1)}%</div></div>
+        <div class="bar-value">${rate.toFixed(3)}</div>
+      </div>`;
+    });
+    html += '</div></div>';
+
+    // Per-round curves
+    html += '<div class="card"><div class="card-title">Evasion Curves by Round</div><table class="param-table"><tr><th>Vector</th>';
+    for (let i = 0; i < data.config.n_rounds; i++) html += `<th>R${i}</th>`;
+    html += '<th>Recovery</th></tr>';
+    vectors.forEach(vid => {
+      const curve = data.per_vector[vid].evasion_curve || [];
+      const recovery = data.recovery?.[vid];
+      html += `<tr><td style="font-weight:600">${vid}</td>`;
+      curve.forEach(v => {
+        const c = v > 0.5 ? 'var(--accent-rose)' : v > 0.2 ? 'var(--accent-amber)' : 'var(--accent-emerald)';
+        html += `<td style="color:${c}">${v.toFixed(3)}</td>`;
+      });
+      html += `<td>${recovery !== undefined ? recovery.toFixed(3) : '-'}</td></tr>`;
+    });
+    html += '</table></div>';
+
+    document.getElementById('coevolution-content').innerHTML = html;
+  } catch(e) {
+    document.getElementById('coevolution-content').innerHTML = `<div class="card"><p class="mechanism-text">Coevolution results not available. Run <code>python experiments/coevolution.py</code> first.</p></div>`;
+  }
+}
+
+// ---- Init ----
+loadTaxonomy();
+</script>
+</body>
+</html>
