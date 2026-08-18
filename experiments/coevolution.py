@@ -16,6 +16,7 @@ Run: python experiments/coevolution.py
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from collections import defaultdict
@@ -54,8 +55,8 @@ from experiments.headline import (
 )
 
 SEED = 42
-POP_PER_VECTOR = 50
-N_ROUNDS = 8
+POP_PER_VECTOR = int(os.environ.get("ARTS_POP", 50))
+N_ROUNDS = int(os.environ.get("ARTS_ROUNDS", 8))
 MUTATION_RATE = 0.3
 N_BENIGN_EPISODES = 20_000
 

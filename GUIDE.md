@@ -24,12 +24,9 @@ detection efficacy, novelty, and real-world feasibility.
 | Seven-arm headline experiment | done, `results/headline.json` |
 | Coevolution loop | done, `results/coevolution.json` |
 | Walkthrough deck, 14 slides | done, `deck/ARTS_walkthrough.pptx` |
-| Web prototype code | written, **never executed** |
-| Git history | **not started** |
-| Final reproducibility pass | **not started** |
-| Submission upload | **not started** |
-
-Two of those blanks are load bearing. See section 9.
+| Web prototype | done, all five panels verified end to end |
+| Git history | done, initial commit `f95c393`, 21 files |
+| Submission upload | **not started, and it is the only thing left** |
 
 ---
 
@@ -39,33 +36,32 @@ Agentic payment fraud produces authorizations that are cryptographically valid,
 mandate-compliant, fast, and approved. The evidence that would expose the attack
 lives inside the agent platform and never crosses the payment network.
 
-60,000 episodes, 29 attack generators, grouped split on `campaign_id`, threshold
-pinned at a 0.5% alert rate on legitimate traffic and calibrated on a held-out
-benign slice. Treatment is 22 agentic vectors that never appear in training.
+200,000 episodes, 29 attack generators, grouped split on `campaign_id`,
+threshold pinned at a 0.5% alert rate on legitimate traffic and calibrated on a
+held-out benign slice. Treatment is 21 agentic vectors that never appear in
+training. Run size is configurable: `ARTS_EPISODES=200000 python
+experiments/headline.py`.
 
 | arm | view | control AUC | treatment AUC | treatment recall | alert |
 |---|---|---|---|---|---|
-| A supervised | v_network | 0.999 | 0.766 | 0.344 | 0.008 |
-| B supervised | v_attested | 0.999 | 0.853 | 0.355 | 0.007 |
-| C novelty | v_network | 0.744 | 0.874 | 0.309 | 0.006 |
-| D novelty | v_attested | 0.696 | 0.981 | 0.497 | 0.007 |
-| E oracle | v_attested | 0.999 | 1.000 | 0.972 | 0.007 |
-| F invariants | v_attested | 0.500 | 0.730 | 0.461 | 0.001 |
-| G hybrid, D or F | v_attested | 0.696 | 0.984 | 0.628 | 0.007 |
+| A supervised | v_network | 0.997 | 0.877 | 0.124 | 0.0053 |
+| B supervised | v_attested | 0.999 | 0.799 | 0.124 | 0.0052 |
+| C novelty | v_network | 0.838 | 0.898 | 0.458 | 0.0054 |
+| D novelty | v_attested | 0.800 | 0.960 | 0.604 | 0.0051 |
+| E oracle | v_attested | 0.998 | 1.000 | 1.000 | 0.0054 |
+| F invariants | v_attested | 0.500 | 0.712 | 0.424 | 0.0009 |
+| G hybrid, D or F | v_attested | 0.800 | 0.963 | 0.713 | 0.0051 |
 
 Three things to keep straight when presenting this.
 
-Arm A is not bad. It is 0.999 on the fraud it was built for. Its treatment
-recall of 0.344 comes almost entirely from vectors with genuine network-visible
-tells. Per vector it sits at exactly 0.00 on AGH-01, AGH-07, MND-02, MND-04 and
-MND-07, which are the attacks the taxonomy predicted would be invisible. Arm G
-takes those to 1.00, 1.00, 1.00, 1.00 and 0.71.
+Arm A is not bad. It is 0.997 on the fraud it was built for. On agentic fraud it
+catches 12.4%, and per vector it is at exactly 0.00 on eighteen of the
+twenty-one. Blind, not degraded.
 
-Arm B is the negative result and it must stay in. Handing the same supervised
-model the attested provenance fields moves recall from 0.344 to 0.355, which is
-nothing, because its labels never taught it what those fields mean. That is why
-the defense is unsupervised. Do not weaken this arm to simplify the story; it is
-what makes arm G credible.
+Arm B is the negative result and it must stay in. The attested fields leave
+recall at exactly 0.124, identical to four decimals, because its labels never
+taught it what those fields mean. Do not weaken this arm to simplify the story;
+it is what makes arm G credible.
 
 XRL-06 mule networks are caught by A at 1.00 and missed by G entirely. The
 deployment shape is an OR of both detectors, never a replacement.
@@ -232,59 +228,35 @@ learned feature and belongs in the featurizer.
 
 ## 9. What is left
 
-Ordered by risk, not by size.
+### R1. Submit (the only blocking item)
 
-### R1. Run the web prototype end to end (highest risk, do first)
+Upload the repo, `deck/ARTS_walkthrough.pptx` and the prototype through the
+Writeups section before 31 August 2026. Draft work left unsubmitted is not
+judged.
 
-The code exists and has been read, never executed. A required submission
-artifact that has never started once is the single largest risk on the board.
+### Verified, for the record
 
-```bash
-python -m uvicorn web.app:app --reload
-```
+The prototype has now been run end to end. All five panels work: taxonomy
+explorer, live generation, two-panel verdict, arm comparison, coevolution
+curves. AGH-01 and MND-02 both pass arm A on `v_network` and are flagged by arm
+G with the fired invariants named on screen. BEN-01 is clean on both. Git is
+initialised with everything committed. `requirements.txt` now includes fastapi
+and uvicorn, which were missing.
 
-Then click every panel: taxonomy explorer, live generation, two-panel verdict,
-arm comparison, coevolution curves. The two-panel verdict is the pitch, so it
-has to work: same record, network view versus attested view, with the invariant
-that fired named on screen.
-
-Accept when: every panel renders with real data from `results/*.json`, generation
-returns a record, and the verdict panel shows a different outcome across the two
-views for at least AGH-01 and MND-02.
-
-### R2. Git, now
-
-No history, no rollback, no diff between today and the 31st.
-
-```bash
-git init && git add -A && git commit -m "ARTS: taxonomy, generators, experiments, prototype, deck"
-```
-
-Add a `.gitignore` for `__pycache__/`, `*.pyc`, `deck/*.jpg`, `deck/*.pdf`.
-Commit after every working change from here.
-
-### R3. Final reproducibility pass
-
-A clean clone must reproduce `results/headline.json` from the fixed seed. Check
-that `run.bat` covers install, smoke, both experiments, and the server. Confirm
-`requirements.txt` is complete: pyyaml, numpy, scikit-learn, fastapi, uvicorn.
-
-### R4. Firm up the per-vector numbers
-
-Test counts are 4 to 58 records per vector, so per-vector recalls are
-directional. Arm-level numbers are well powered. Either raise `N_EPISODES` for
-the final run or state the limitation, which the deck already does.
-
-### R5. Submit
-
-Upload the repo, the deck and the prototype through the Writeups section before
-31 August. Draft work left unsubmitted is not judged.
+Note for anyone running git in this folder: the mount reports
+`unable to unlink ... Operation not permitted` warnings on `.git` temp files.
+The commits succeed anyway. Verify with `git log --oneline` rather than trusting
+the warning text.
 
 ### Optional, only if time remains
 
 Promote some of the 13 stub vectors. XRL-01 and XRL-05 need a settlement-clock
 record type that does not exist yet, recorded in `open_items` in
 `auth_record.yaml`. Do not fake them on the authorization record.
+
+Per-vector test counts now run from 26 to 406 records, which is adequate for
+arm-level claims and thin for the smallest vectors. Raising `ARTS_EPISODES`
+further would firm those up.
 
 ---
 

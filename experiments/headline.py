@@ -46,6 +46,7 @@ Run: python experiments/headline.py
 from __future__ import annotations
 
 import json
+import os
 import random
 import sys
 from collections import Counter
@@ -70,7 +71,8 @@ TREATMENT = {
     "XRL-01", "XRL-03", "XRL-04", "XRL-06",
 }
 ALERT_RATE = 0.005
-N_EPISODES = 60_000
+# Override for a higher-powered final run: ARTS_EPISODES=200000 python experiments/headline.py
+N_EPISODES = int(os.environ.get("ARTS_EPISODES", 60_000))
 SEED = 17
 
 

@@ -1,6 +1,6 @@
 {
   "config": {
-    "n_episodes": 60000,
+    "n_episodes": 200000,
     "seed": 17,
     "alert_rate": 0.005,
     "control": [
@@ -42,112 +42,112 @@
       "view": "v_network",
       "kind": "supervised",
       "n_features": 56,
-      "threshold": 0.000254,
+      "threshold": 0.000127,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.9889,
-        "precision": 0.4178,
-        "f1": 0.5875,
-        "benign_alert_rate": 0.00767,
-        "roc_auc": 0.999,
-        "pr_auc": 0.9827
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.9946,
+        "precision": 0.5612,
+        "f1": 0.7175,
+        "benign_alert_rate": 0.00536,
+        "roc_auc": 0.9973,
+        "pr_auc": 0.9923
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.344,
-        "precision": 0.4409,
-        "f1": 0.3865,
-        "benign_alert_rate": 0.00761,
-        "roc_auc": 0.7656,
-        "pr_auc": 0.3406
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.1236,
+        "precision": 0.4004,
+        "f1": 0.1889,
+        "benign_alert_rate": 0.00534,
+        "roc_auc": 0.877,
+        "pr_auc": 0.251
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
+          "n": 50,
           "recall": 0.0
         },
         "AGH-02": {
-          "n": 12,
+          "n": 40,
           "recall": 0.0
         },
         "AGH-03": {
-          "n": 11,
+          "n": 26,
           "recall": 0.0
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 35,
+          "recall": 0.0
         },
         "AGH-07": {
-          "n": 11,
+          "n": 43,
           "recall": 0.0
         },
         "AGH-09": {
-          "n": 8,
-          "recall": 0.75
+          "n": 32,
+          "recall": 0.0
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.5714
+          "n": 61,
+          "recall": 0.459
         },
         "IDS-02": {
-          "n": 10,
-          "recall": 0.3
+          "n": 27,
+          "recall": 0.5556
         },
         "IDS-03": {
-          "n": 11,
+          "n": 28,
           "recall": 0.0
         },
         "IDS-04": {
-          "n": 10,
+          "n": 55,
           "recall": 0.0
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 0.25
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.0
         },
         "MND-01": {
-          "n": 10,
-          "recall": 1.0
+          "n": 32,
+          "recall": 0.0
         },
         "MND-02": {
-          "n": 11,
+          "n": 41,
           "recall": 0.0
         },
         "MND-03": {
-          "n": 15,
-          "recall": 0.3333
+          "n": 26,
+          "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
+          "n": 406,
           "recall": 0.0
         },
         "MND-05": {
-          "n": 16,
-          "recall": 0.5
+          "n": 32,
+          "recall": 0.0
         },
         "MND-07": {
-          "n": 7,
+          "n": 34,
           "recall": 0.0
         },
         "XRL-01": {
-          "n": 4,
+          "n": 26,
           "recall": 0.0
         },
         "XRL-03": {
-          "n": 9,
-          "recall": 1.0
+          "n": 194,
+          "recall": 0.0
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 29,
+          "recall": 0.0
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 1.0
         }
       }
@@ -156,112 +156,112 @@
       "view": "v_attested",
       "kind": "supervised",
       "n_features": 78,
-      "threshold": 0.000337,
+      "threshold": 0.000182,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.9889,
-        "precision": 0.4564,
-        "f1": 0.6246,
-        "benign_alert_rate": 0.00656,
-        "roc_auc": 0.9994,
-        "pr_auc": 0.9845
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.9946,
+        "precision": 0.5708,
+        "f1": 0.7253,
+        "benign_alert_rate": 0.00515,
+        "roc_auc": 0.9986,
+        "pr_auc": 0.9921
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.3546,
-        "precision": 0.4878,
-        "f1": 0.4107,
-        "benign_alert_rate": 0.0065,
-        "roc_auc": 0.8531,
-        "pr_auc": 0.3537
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.1236,
+        "precision": 0.409,
+        "f1": 0.1899,
+        "benign_alert_rate": 0.00515,
+        "roc_auc": 0.7986,
+        "pr_auc": 0.1867
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
+          "n": 50,
           "recall": 0.0
         },
         "AGH-02": {
-          "n": 12,
+          "n": 40,
           "recall": 0.0
         },
         "AGH-03": {
-          "n": 11,
+          "n": 26,
           "recall": 0.0
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 35,
+          "recall": 0.0
         },
         "AGH-07": {
-          "n": 11,
+          "n": 43,
           "recall": 0.0
         },
         "AGH-09": {
-          "n": 8,
-          "recall": 0.75
+          "n": 32,
+          "recall": 0.0
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.5714
+          "n": 61,
+          "recall": 0.459
         },
         "IDS-02": {
-          "n": 10,
-          "recall": 0.5
+          "n": 27,
+          "recall": 0.5556
         },
         "IDS-03": {
-          "n": 11,
+          "n": 28,
           "recall": 0.0
         },
         "IDS-04": {
-          "n": 10,
+          "n": 55,
           "recall": 0.0
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 0.25
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.0
         },
         "MND-01": {
-          "n": 10,
-          "recall": 1.0
+          "n": 32,
+          "recall": 0.0
         },
         "MND-02": {
-          "n": 11,
+          "n": 41,
           "recall": 0.0
         },
         "MND-03": {
-          "n": 15,
-          "recall": 0.4
+          "n": 26,
+          "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
+          "n": 406,
           "recall": 0.0
         },
         "MND-05": {
-          "n": 16,
-          "recall": 0.5
+          "n": 32,
+          "recall": 0.0
         },
         "MND-07": {
-          "n": 7,
+          "n": 34,
           "recall": 0.0
         },
         "XRL-01": {
-          "n": 4,
+          "n": 26,
           "recall": 0.0
         },
         "XRL-03": {
-          "n": 9,
-          "recall": 1.0
+          "n": 194,
+          "recall": 0.0
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 29,
+          "recall": 0.0
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 1.0
         }
       }
@@ -270,112 +270,112 @@
       "view": "v_network",
       "kind": "novelty",
       "n_features": 55,
-      "threshold": 0.581948,
+      "threshold": 0.579081,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.2667,
-        "precision": 0.2124,
-        "f1": 0.2365,
-        "benign_alert_rate": 0.00551,
-        "roc_auc": 0.7441,
-        "pr_auc": 0.2061
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.1897,
+        "precision": 0.2011,
+        "f1": 0.1953,
+        "benign_alert_rate": 0.00519,
+        "roc_auc": 0.8379,
+        "pr_auc": 0.1901
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.3085,
-        "precision": 0.4943,
-        "f1": 0.3799,
-        "benign_alert_rate": 0.00551,
-        "roc_auc": 0.8735,
-        "pr_auc": 0.3744
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.4583,
+        "precision": 0.7116,
+        "f1": 0.5575,
+        "benign_alert_rate": 0.00536,
+        "roc_auc": 0.8984,
+        "pr_auc": 0.5563
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
-          "recall": 0.0
+          "n": 50,
+          "recall": 0.06
         },
         "AGH-02": {
-          "n": 12,
+          "n": 40,
           "recall": 0.0
         },
         "AGH-03": {
-          "n": 11,
+          "n": 26,
           "recall": 0.0
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 0.0
+          "n": 35,
+          "recall": 0.0857
         },
         "AGH-07": {
-          "n": 11,
-          "recall": 0.1818
+          "n": 43,
+          "recall": 0.2093
         },
         "AGH-09": {
-          "n": 8,
+          "n": 32,
           "recall": 0.0
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.1429
+          "n": 61,
+          "recall": 0.1803
         },
         "IDS-02": {
-          "n": 10,
+          "n": 27,
           "recall": 0.0
         },
         "IDS-03": {
-          "n": 11,
+          "n": 28,
           "recall": 0.0
         },
         "IDS-04": {
-          "n": 10,
+          "n": 55,
           "recall": 0.0
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 1.0
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.5056
         },
         "MND-01": {
-          "n": 10,
-          "recall": 0.3
+          "n": 32,
+          "recall": 0.5312
         },
         "MND-02": {
-          "n": 11,
-          "recall": 0.0909
+          "n": 41,
+          "recall": 0.0
         },
         "MND-03": {
-          "n": 15,
-          "recall": 0.2
+          "n": 26,
+          "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
-          "recall": 1.0
+          "n": 406,
+          "recall": 0.9433
         },
         "MND-05": {
-          "n": 16,
+          "n": 32,
           "recall": 0.0
         },
         "MND-07": {
-          "n": 7,
+          "n": 34,
           "recall": 0.0
         },
         "XRL-01": {
-          "n": 4,
-          "recall": 0.25
+          "n": 26,
+          "recall": 0.3462
         },
         "XRL-03": {
-          "n": 9,
-          "recall": 0.7778
+          "n": 194,
+          "recall": 0.8608
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 0.1667
+          "n": 29,
+          "recall": 0.5172
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 0.0
         }
       }
@@ -384,112 +384,112 @@
       "view": "v_attested",
       "kind": "novelty",
       "n_features": 74,
-      "threshold": 0.571238,
+      "threshold": 0.574,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.2556,
-        "precision": 0.1716,
-        "f1": 0.2054,
-        "benign_alert_rate": 0.00687,
-        "roc_auc": 0.6963,
-        "pr_auc": 0.1686
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.1626,
+        "precision": 0.184,
+        "f1": 0.1727,
+        "benign_alert_rate": 0.00496,
+        "roc_auc": 0.7996,
+        "pr_auc": 0.1538
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.4965,
-        "precision": 0.5578,
-        "f1": 0.5253,
-        "benign_alert_rate": 0.00687,
-        "roc_auc": 0.9805,
-        "pr_auc": 0.5945
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.6039,
+        "precision": 0.7736,
+        "f1": 0.6783,
+        "benign_alert_rate": 0.00509,
+        "roc_auc": 0.9595,
+        "pr_auc": 0.7343
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
-          "recall": 0.25
+          "n": 50,
+          "recall": 0.6
         },
         "AGH-02": {
-          "n": 12,
-          "recall": 0.0833
+          "n": 40,
+          "recall": 0.15
         },
         "AGH-03": {
-          "n": 11,
-          "recall": 0.0909
+          "n": 26,
+          "recall": 0.0769
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 35,
+          "recall": 0.6286
         },
         "AGH-07": {
-          "n": 11,
-          "recall": 0.5455
+          "n": 43,
+          "recall": 0.2326
         },
         "AGH-09": {
-          "n": 8,
-          "recall": 0.25
+          "n": 32,
+          "recall": 0.1562
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.1905
+          "n": 61,
+          "recall": 0.3443
         },
         "IDS-02": {
-          "n": 10,
-          "recall": 0.0
+          "n": 27,
+          "recall": 0.037
         },
         "IDS-03": {
-          "n": 11,
-          "recall": 0.0909
+          "n": 28,
+          "recall": 0.1429
         },
         "IDS-04": {
-          "n": 10,
-          "recall": 0.0
+          "n": 55,
+          "recall": 0.0364
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 1.0
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.8667
         },
         "MND-01": {
-          "n": 10,
-          "recall": 0.9
+          "n": 32,
+          "recall": 0.7812
         },
         "MND-02": {
-          "n": 11,
-          "recall": 0.3636
+          "n": 41,
+          "recall": 0.122
         },
         "MND-03": {
-          "n": 15,
-          "recall": 0.8
+          "n": 26,
+          "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
-          "recall": 1.0
+          "n": 406,
+          "recall": 0.9926
         },
         "MND-05": {
-          "n": 16,
-          "recall": 0.3125
+          "n": 32,
+          "recall": 0.1875
         },
         "MND-07": {
-          "n": 7,
-          "recall": 0.4286
+          "n": 34,
+          "recall": 0.2059
         },
         "XRL-01": {
-          "n": 4,
-          "recall": 0.75
+          "n": 26,
+          "recall": 0.8846
         },
         "XRL-03": {
-          "n": 9,
-          "recall": 1.0
+          "n": 194,
+          "recall": 0.9381
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 29,
+          "recall": 0.7931
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 0.0
         }
       }
@@ -498,112 +498,112 @@
       "view": "v_attested",
       "kind": "supervised",
       "n_features": 98,
-      "threshold": 0.000246,
+      "threshold": 0.000398,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.9889,
-        "precision": 0.4363,
-        "f1": 0.6054,
-        "benign_alert_rate": 0.00712,
-        "roc_auc": 0.9994,
-        "pr_auc": 0.9857
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.9919,
+        "precision": 0.5596,
+        "f1": 0.7155,
+        "benign_alert_rate": 0.00537,
+        "roc_auc": 0.9982,
+        "pr_auc": 0.9911
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.9716,
-        "precision": 0.7044,
-        "f1": 0.8167,
-        "benign_alert_rate": 0.00712,
-        "roc_auc": 0.9996,
-        "pr_auc": 0.9869
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 1.0,
+        "precision": 0.8424,
+        "f1": 0.9145,
+        "benign_alert_rate": 0.00539,
+        "roc_auc": 1.0,
+        "pr_auc": 1.0
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
+          "n": 50,
           "recall": 1.0
         },
         "AGH-02": {
-          "n": 12,
+          "n": 40,
           "recall": 1.0
         },
         "AGH-03": {
-          "n": 11,
+          "n": 26,
           "recall": 1.0
         },
         "AGH-04": {
-          "n": 6,
+          "n": 35,
           "recall": 1.0
         },
         "AGH-07": {
-          "n": 11,
+          "n": 43,
           "recall": 1.0
         },
         "AGH-09": {
-          "n": 8,
+          "n": 32,
           "recall": 1.0
         },
         "IDS-01": {
-          "n": 21,
+          "n": 61,
           "recall": 1.0
         },
         "IDS-02": {
-          "n": 10,
+          "n": 27,
           "recall": 1.0
         },
         "IDS-03": {
-          "n": 11,
+          "n": 28,
           "recall": 1.0
         },
         "IDS-04": {
-          "n": 10,
+          "n": 55,
           "recall": 1.0
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 0.0
+        "IDS-07": {
+          "n": 180,
+          "recall": 1.0
         },
         "MND-01": {
-          "n": 10,
+          "n": 32,
           "recall": 1.0
         },
         "MND-02": {
-          "n": 11,
+          "n": 41,
           "recall": 1.0
         },
         "MND-03": {
-          "n": 15,
+          "n": 26,
           "recall": 1.0
         },
         "MND-04": {
-          "n": 58,
+          "n": 406,
           "recall": 1.0
         },
         "MND-05": {
-          "n": 16,
+          "n": 32,
           "recall": 1.0
         },
         "MND-07": {
-          "n": 7,
+          "n": 34,
           "recall": 1.0
         },
         "XRL-01": {
-          "n": 4,
+          "n": 26,
           "recall": 1.0
         },
         "XRL-03": {
-          "n": 9,
+          "n": 194,
           "recall": 1.0
         },
         "XRL-04": {
-          "n": 6,
+          "n": 29,
           "recall": 1.0
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 1.0
         }
       }
@@ -614,110 +614,110 @@
       "n_features": 74,
       "threshold": 0.0,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
         "recall": 0.0,
         "precision": 0.0,
         "f1": 0.0,
-        "benign_alert_rate": 0.00099,
-        "roc_auc": 0.4995,
-        "pr_auc": 0.0055
+        "benign_alert_rate": 0.0009,
+        "roc_auc": 0.4996,
+        "pr_auc": 0.0068
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.461,
-        "precision": 0.8904,
-        "f1": 0.6075,
-        "benign_alert_rate": 0.00099,
-        "roc_auc": 0.73,
-        "pr_auc": 0.4259
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.4239,
+        "precision": 0.9317,
+        "f1": 0.5827,
+        "benign_alert_rate": 0.0009,
+        "roc_auc": 0.7115,
+        "pr_auc": 0.4144
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
+          "n": 50,
           "recall": 1.0
         },
         "AGH-02": {
-          "n": 12,
+          "n": 40,
           "recall": 0.0
         },
         "AGH-03": {
-          "n": 11,
-          "recall": 0.4545
+          "n": 26,
+          "recall": 0.5769
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 0.0
+          "n": 35,
+          "recall": 0.0286
         },
         "AGH-07": {
-          "n": 11,
+          "n": 43,
           "recall": 1.0
         },
         "AGH-09": {
-          "n": 8,
-          "recall": 1.0
+          "n": 32,
+          "recall": 0.9688
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.1429
+          "n": 61,
+          "recall": 0.0984
         },
         "IDS-02": {
-          "n": 10,
+          "n": 27,
           "recall": 0.0
         },
         "IDS-03": {
-          "n": 11,
+          "n": 28,
           "recall": 0.0
         },
         "IDS-04": {
-          "n": 10,
+          "n": 55,
           "recall": 0.0
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 0.0
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.0333
         },
         "MND-01": {
-          "n": 10,
-          "recall": 0.8
+          "n": 32,
+          "recall": 0.75
         },
         "MND-02": {
-          "n": 11,
+          "n": 41,
           "recall": 1.0
         },
         "MND-03": {
-          "n": 15,
+          "n": 26,
           "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
-          "recall": 1.0
+          "n": 406,
+          "recall": 0.931
         },
         "MND-05": {
-          "n": 16,
+          "n": 32,
           "recall": 0.625
         },
         "MND-07": {
-          "n": 7,
-          "recall": 0.4286
+          "n": 34,
+          "recall": 0.5294
         },
         "XRL-01": {
-          "n": 4,
-          "recall": 0.25
+          "n": 26,
+          "recall": 0.0385
         },
         "XRL-03": {
-          "n": 9,
+          "n": 194,
           "recall": 0.0
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 0.6667
+          "n": 29,
+          "recall": 0.7241
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 0.0
         }
       }
@@ -726,112 +726,112 @@
       "view": "v_attested",
       "kind": "hybrid",
       "n_features": 74,
-      "threshold": 0.999484,
+      "threshold": 0.999131,
       "control": {
-        "n": 16247,
-        "n_fraud": 90,
-        "n_benign": 16157,
-        "recall": 0.2556,
-        "precision": 0.1769,
-        "f1": 0.2091,
-        "benign_alert_rate": 0.00662,
-        "roc_auc": 0.6962,
-        "pr_auc": 0.1427
+        "n": 53951,
+        "n_fraud": 369,
+        "n_benign": 53582,
+        "recall": 0.1626,
+        "precision": 0.1852,
+        "f1": 0.1732,
+        "benign_alert_rate": 0.00493,
+        "roc_auc": 0.7995,
+        "pr_auc": 0.126
       },
       "treatment": {
-        "n": 16439,
-        "n_fraud": 282,
-        "n_benign": 16157,
-        "recall": 0.6277,
-        "precision": 0.6232,
-        "f1": 0.6254,
-        "benign_alert_rate": 0.00662,
-        "roc_auc": 0.9835,
-        "pr_auc": 0.6952
+        "n": 55127,
+        "n_fraud": 1545,
+        "n_benign": 53582,
+        "recall": 0.7133,
+        "precision": 0.8026,
+        "f1": 0.7553,
+        "benign_alert_rate": 0.00506,
+        "roc_auc": 0.9633,
+        "pr_auc": 0.7919
       },
       "treatment_by_vector": {
         "AGH-01": {
-          "n": 8,
+          "n": 50,
           "recall": 1.0
         },
         "AGH-02": {
-          "n": 12,
-          "recall": 0.0833
+          "n": 40,
+          "recall": 0.15
         },
         "AGH-03": {
-          "n": 11,
-          "recall": 0.4545
+          "n": 26,
+          "recall": 0.6538
         },
         "AGH-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 35,
+          "recall": 0.6286
         },
         "AGH-07": {
-          "n": 11,
+          "n": 43,
           "recall": 1.0
         },
         "AGH-09": {
-          "n": 8,
-          "recall": 1.0
+          "n": 32,
+          "recall": 0.9688
         },
         "IDS-01": {
-          "n": 21,
-          "recall": 0.1905
+          "n": 61,
+          "recall": 0.3443
         },
         "IDS-02": {
-          "n": 10,
-          "recall": 0.0
+          "n": 27,
+          "recall": 0.037
         },
         "IDS-03": {
-          "n": 11,
-          "recall": 0.0909
+          "n": 28,
+          "recall": 0.1429
         },
         "IDS-04": {
-          "n": 10,
-          "recall": 0.0
+          "n": 55,
+          "recall": 0.0364
         },
-        "IDS-05": {
-          "n": 8,
-          "recall": 1.0
+        "IDS-07": {
+          "n": 180,
+          "recall": 0.8667
         },
         "MND-01": {
-          "n": 10,
-          "recall": 1.0
+          "n": 32,
+          "recall": 0.9688
         },
         "MND-02": {
-          "n": 11,
+          "n": 41,
           "recall": 1.0
         },
         "MND-03": {
-          "n": 15,
-          "recall": 0.8
+          "n": 26,
+          "recall": 0.0
         },
         "MND-04": {
-          "n": 58,
-          "recall": 1.0
+          "n": 406,
+          "recall": 0.9926
         },
         "MND-05": {
-          "n": 16,
-          "recall": 0.6875
+          "n": 32,
+          "recall": 0.6562
         },
         "MND-07": {
-          "n": 7,
-          "recall": 0.7143
+          "n": 34,
+          "recall": 0.6176
         },
         "XRL-01": {
-          "n": 4,
-          "recall": 0.75
+          "n": 26,
+          "recall": 0.8846
         },
         "XRL-03": {
-          "n": 9,
-          "recall": 1.0
+          "n": 194,
+          "recall": 0.9381
         },
         "XRL-04": {
-          "n": 6,
-          "recall": 1.0
+          "n": 29,
+          "recall": 0.931
         },
         "XRL-06": {
-          "n": 30,
+          "n": 148,
           "recall": 0.0
         }
       }

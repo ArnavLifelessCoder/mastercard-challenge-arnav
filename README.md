@@ -49,44 +49,43 @@ The projection is the experiment.
 
 ## Detection result
 
-`python experiments/headline.py`: 60,000 episodes, 29 attack generators,
+`python experiments/headline.py`: 200,000 episodes, 29 attack generators,
 grouped split on `campaign_id`, threshold pinned at a 0.5% alert rate on
-legitimate traffic and calibrated on a held-out benign slice. Treatment is 22
+legitimate traffic and calibrated on a held-out benign slice. Treatment is 21
 agentic vectors that never appear in training, control is 7 classical
 GenAI-assisted vectors that do.
 
 | arm | view | control AUC | treatment AUC | treatment recall | alert rate |
 |---|---|---|---|---|---|
-| A supervised | v_network | 0.999 | 0.766 | 0.344 | 0.008 |
-| B supervised | v_attested | 0.999 | 0.853 | 0.355 | 0.007 |
-| C novelty | v_network | 0.744 | 0.874 | 0.309 | 0.006 |
-| D novelty | v_attested | 0.696 | 0.981 | 0.497 | 0.007 |
-| E supervised oracle | v_attested | 0.999 | 1.000 | 0.972 | 0.007 |
-| F invariants only | v_attested | 0.500 | 0.730 | 0.461 | 0.001 |
-| G hybrid (D or F) | v_attested | 0.696 | 0.984 | 0.628 | 0.007 |
+| A supervised | v_network | 0.997 | 0.877 | 0.124 | 0.0053 |
+| B supervised | v_attested | 0.999 | 0.799 | 0.124 | 0.0052 |
+| C novelty | v_network | 0.838 | 0.898 | 0.458 | 0.0054 |
+| D novelty | v_attested | 0.800 | 0.960 | 0.604 | 0.0051 |
+| E supervised oracle | v_attested | 0.998 | 1.000 | 1.000 | 0.0054 |
+| F invariants only | v_attested | 0.500 | 0.712 | 0.424 | 0.0009 |
+| G hybrid (D or F) | v_attested | 0.800 | 0.963 | 0.713 | 0.0051 |
 
-Arm A is the incumbent, and it is excellent at what it was built for: 0.999 AUC
-on classical fraud. On agentic fraud it never trained on, ranking quality falls
-to 0.766 and it catches 34% at the operating point.
+Arm A is the incumbent, and it is excellent at what it was built for: 0.997 AUC
+on classical fraud. On agentic fraud it never trained on, it catches 12.4% at
+the same operating point. Per vector it is at exactly 0.00 on eighteen of the
+twenty-one agentic vectors, including checkout injection, email injection, cart
+mandate substitution, sub-cap structuring and memory poisoning. Not degraded,
+blind.
 
 Arm B is the result that shaped the design. Handing the same supervised model
-the attested provenance fields moves recall from 0.344 to 0.355, which is
-nothing. A model whose labels never contained the pattern does not learn to use
+the attested provenance fields leaves recall at exactly 0.124, unchanged to four
+decimals. A model whose labels never contained the pattern does not learn to use
 the evidence. So the defense cannot be supervised.
 
 Arm G is the answer: novelty detection calibrated on legitimate traffic, ORed
 with nine consent invariants that use no fraud labels at all. Treatment AUC
-0.984 and recall 0.628 at a 0.7% alert rate, on attack families it has never
+0.963 and recall 0.713 at a 0.51% alert rate, on attack families it has never
 seen. D and F alone are both worse and they fail on disjoint vectors, which is
 why the combiner is a rank-max rather than an average.
 
-Per-vector, arm A is not merely worse, it is blind on exactly the attacks the
-taxonomy predicted would be invisible at the network: AGH-01 checkout injection
-0.00, AGH-07 transactional email injection 0.00, MND-02 cart mandate
-substitution 0.00, MND-04 sub-cap structuring 0.00, MND-07 recurring hijack
-0.00. Arm G takes those to 1.00, 1.00, 1.00, 1.00 and 0.71. The reverse also
-holds: XRL-06 mule networks are caught by A at 1.00 and missed by G, which is
-why the deployment shape is an OR of both, not a replacement.
+The counterweight matters: XRL-06 mule networks are caught by A at 1.00 and
+missed by G entirely. The deployment shape is an OR of both detectors, never a
+replacement.
 
 ## Coevolution result
 
@@ -115,11 +114,11 @@ and measures 0.00, AGH-02 was guessed at 0.70 and measures 1.00.
 
 ## Honest limitations
 
-Per-vector test counts in the headline run are small, between 4 and 58 records.
-Vector-level recalls are directional, not precise. The arm-level numbers are
-well powered; the per-vector table is not.
+Per-vector test counts run from 26 to 406 records. Adequate for the arm-level
+claims, thin for the smallest vectors, so treat individual vector recalls
+accordingly.
 
-Arm E, the supervised oracle with treatment in training, reaches 0.9996 AUC.
+Arm E, the supervised oracle with treatment in training, reaches 1.000 AUC.
 That is an upper reference, and it also says the generators remain more
 separable than real fraud would be once you are allowed to train on it.
 
@@ -132,5 +131,6 @@ rather than modelled properly. Recorded in `open_items` in `auth_record.yaml`.
 Built: 29 of 29 vectors declared `implemented`, plus 3 benign generators.
 13 taxonomy vectors remain `stub` by design.
 
-Done: Identify, Generate, Defend, coevolution loop, web prototype.
-Remaining: submission deck, git history, final reproducibility pass.
+Done: Identify, Generate, Defend, coevolution loop, web prototype (verified end
+to end), deck, git history.
+Remaining: submission upload before 31 August.

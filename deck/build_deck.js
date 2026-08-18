@@ -226,11 +226,11 @@ function foot(s, txt) {
 // ---------------------------------------------------------------- 7 result: blindness
 {
   const s = lightSlide("Result 1", "The incumbent is blind, not merely degraded");
-  const vec = ["AGH-01", "AGH-07", "MND-02", "MND-04", "MND-07", "MND-05", "IDS-05", "XRL-06"];
+  const vec = ["AGH-01", "AGH-07", "MND-02", "MND-04", "MND-07", "MND-05", "MND-01", "XRL-06"];
   const label = {
     "AGH-01": "Checkout injection", "AGH-07": "Email injection", "MND-02": "Cart substitution",
     "MND-04": "Sub-cap structuring", "MND-07": "Recurring hijack", "MND-05": "Allowlist aliasing",
-    "IDS-05": "Agentic ATO", "XRL-06": "Mule network",
+    "MND-01": "Memory poisoning", "XRL-06": "Mule network",
   };
   const A = HL.arms["A supervised v_network"].treatment_by_vector;
   const G = HL.arms["G hybrid     v_attested"].treatment_by_vector;
@@ -249,7 +249,7 @@ function foot(s, txt) {
   s.addText("Detection rate by attack, at a fixed 0.5% alert budget", { x: M, y: 6.35, w: 8, h: 0.3, fontFace: BODY, fontSize: 10.5, color: MUTE, margin: 0 });
   card(s, 9.1, 1.65, 3.5, 4.6);
   s.addText("Read the zeros", { x: 9.4, y: 1.95, w: 2.9, h: 0.4, fontFace: HEAD, fontSize: 19, bold: true, color: INK, margin: 0 });
-  s.addText("Five agentic vectors sit at exactly 0.00 for the incumbent. These are the attacks the taxonomy predicted would be invisible at the network, and they are.\n\nThe last row is the counterweight. Mule networks are caught by the incumbent and missed by ours.\n\nSo the deployment shape is an OR of both detectors, not a replacement.", {
+  s.addText("Eighteen of twenty-one agentic vectors sit at exactly 0.00 for the incumbent. These are the attacks the taxonomy predicted would be invisible at the network, and they are.\n\nThe last row is the counterweight. Mule networks are caught by the incumbent and missed by ours.\n\nSo the deployment shape is an OR of both detectors, not a replacement.", {
     x: 9.4, y: 2.5, w: 2.9, h: 3.5, fontFace: BODY, fontSize: 12, color: MUTE, lineSpacing: 17, margin: 0,
   });
 }
@@ -292,8 +292,8 @@ function foot(s, txt) {
   s.addText("Agentic attacks, none of which appear in training", { x: M, y: 6.1, w: 7.5, h: 0.3, fontFace: BODY, fontSize: 10.5, color: MUTE, margin: 0 });
   card(s, 8.6, 1.7, 4.0, 4.3, INK2);
   s.addText("Arm G", { x: 8.9, y: 1.95, w: 3.4, h: 0.4, fontFace: HEAD, fontSize: 22, bold: true, color: PAPER, margin: 0 });
-  s.addText("0.984", { x: 8.9, y: 2.5, w: 3.4, h: 0.7, fontFace: HEAD, fontSize: 44, bold: true, color: RED, margin: 0 });
-  s.addText("AUC on unseen agentic attacks, at a 0.7% alert rate", { x: 8.9, y: 3.2, w: 3.4, h: 0.55, fontFace: BODY, fontSize: 12, color: "9AA3B2", lineSpacing: 16, margin: 0 });
+  s.addText("0.963", { x: 8.9, y: 2.5, w: 3.4, h: 0.7, fontFace: HEAD, fontSize: 44, bold: true, color: RED, margin: 0 });
+  s.addText("AUC on unseen agentic attacks, at a 0.5% alert rate", { x: 8.9, y: 3.2, w: 3.4, h: 0.55, fontFace: BODY, fontSize: 12, color: "9AA3B2", lineSpacing: 16, margin: 0 });
   s.addText("Novelty detection fitted on legitimate traffic, ORed with nine consent invariants. Neither half uses a fraud label.\n\nThey fail on disjoint attacks, so the combiner is a rank-max, not an average. Averaging halved whichever detector was firing and cost us an entire vector.", {
     x: 8.9, y: 3.95, w: 3.4, h: 2.0, fontFace: BODY, fontSize: 12, color: "C9CEDA", lineSpacing: 17, margin: 0,
   });
@@ -375,8 +375,8 @@ function foot(s, txt) {
 {
   const s = lightSlide("What we would not claim", "Limitations, stated before you find them");
   const lim = [
-    ["Per-vector counts are small", "Between 4 and 58 test records per attack. Arm-level numbers are well powered; the per-vector table is directional."],
-    ["The oracle is too good", "Arm E reaches 0.9996 with agentic attacks in training. Real fraud is less separable than simulated fraud, even with perfect labels."],
+    ["Per-vector counts are small", "Between 26 and 406 test records per attack after the 200,000 episode run. Adequate for the arm-level claims, thin for the smallest vectors."],
+    ["The oracle is too good", "Arm E reaches 1.000 with agentic attacks in training. Real fraud is less separable than simulated fraud, even with perfect labels."],
     ["No settlement clock", "Refund abuse and merchant bust-out are approximated on the authorization record rather than modelled on their own timeline."],
     ["Recalibration is not a cure", "After coevolution, refitting the defense on fresh benign traffic restores some vectors and not others. We report both."],
   ];
@@ -395,10 +395,10 @@ function foot(s, txt) {
   s.addText("The loop, in one line", {
     x: M, y: 1.5, w: 10, h: 0.6, fontFace: BODY, fontSize: 13, bold: true, color: RED, charSpacing: 2, margin: 0,
   });
-  s.addText("We invented 42 ways to rob an agent, built 29 of them,\nfound our own detector blind to a third, and shipped a defense\nthat catches them without a single labelled example.", {
+  s.addText("We invented 42 ways to rob an agent, built 29 of them,\nfound our own detector blind to eighteen of them, and shipped a defense\nthat catches them without a single labelled example.", {
     x: M, y: 2.15, w: 11.5, h: 2.0, fontFace: HEAD, fontSize: 28, color: PAPER, lineSpacing: 44, margin: 0,
   });
-  const stats = [["42", "vectors mapped"], ["29", "simulated"], ["0.984", "AUC, unseen attacks"], ["0.7%", "alert budget"]];
+  const stats = [["42", "vectors mapped"], ["29", "simulated"], ["0.963", "AUC, unseen attacks"], ["0.5%", "alert budget"]];
   stats.forEach(([v, l], i) => {
     const x = M + i * 3.05;
     s.addText(v, { x, y: 4.7, w: 2.8, h: 0.7, fontFace: HEAD, fontSize: 36, bold: true, color: i === 2 ? RED : PAPER, margin: 0 });
